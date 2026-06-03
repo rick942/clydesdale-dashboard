@@ -119,6 +119,22 @@ header .as-of{font-size:11px;color:var(--muted);letter-spacing:1.5px;text-transf
 footer{text-align:center;color:var(--muted);font-size:11px;margin-top:22px;line-height:1.7}
 footer img{width:30px;opacity:.6;margin-bottom:8px}
 </style>
+<style>
+#ponyCard{position:relative;border-radius:16px;margin:0 0 14px;padding:2px;overflow:hidden;background:var(--line);isolation:isolate}
+#ponyCard .pony-ring{position:absolute;inset:-65%;z-index:0;border-radius:50%;opacity:0;filter:blur(3px);
+  background:conic-gradient(from 0deg,transparent 0deg,transparent 250deg,rgba(212,175,55,.18) 300deg,#f6e7a8 342deg,#fffbe9 358deg,#f6e7a8 360deg)}
+#ponyCard .pony-inner{position:relative;z-index:1;background:var(--panel);border-radius:14px;padding:16px 20px;border:1px solid rgba(212,175,55,.45)}
+#ponyCard.celebrate .pony-ring{animation:ponySpin 2.4s cubic-bezier(.55,0,.85,1) forwards}
+@keyframes ponySpin{
+  0%{transform:rotate(0deg);opacity:.25}
+  60%{opacity:.9}
+  82%{opacity:1;filter:blur(2px) brightness(1.7)}
+  92%{opacity:1;filter:blur(1px) brightness(2.1)}
+  100%{transform:rotate(1800deg);opacity:0;filter:blur(5px) brightness(1)}
+}
+#ponyCard .pony-emoji{font-size:30px;line-height:1}
+@media (prefers-reduced-motion:reduce){#ponyCard.celebrate .pony-ring{animation:none}}
+</style>
 </head>
 <body>
 
@@ -142,6 +158,20 @@ footer img{width:30px;opacity:.6;margin-bottom:8px}
     </div>
     <a class="schwab-btn" href="https://client.schwab.com/Areas/Access/Login" target="_blank" rel="noopener">Log in to Schwab &#8599;</a>
   </header>
+
+  <div id="ponyCard">
+    <div class="pony-ring"></div>
+    <div class="pony-inner">
+      <div style="display:flex;align-items:center;gap:14px">
+        <div class="pony-emoji">&#128014;</div>
+        <div style="flex:1">
+          <div class="label" style="color:var(--gold)">Pony of the Month</div>
+          <div class="gold-text" style="font-family:'Fraunces',serif;font-size:24px;margin-top:2px">Evan Stoll</div>
+          <div style="color:var(--muted);font-size:13px;margin-top:4px">Read <b style="color:var(--txt)">The Psychology of Money</b> off the club reading list. &#128218;</div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <div class="card" style="animation-delay:.02s">
     <div style="display:flex;gap:20px;align-items:stretch;flex-wrap:wrap">
@@ -324,7 +354,7 @@ function render(){
   document.getElementById('inlineGain').textContent=pct1(DATA.totalGainPct);
   document.getElementById('mathNote').innerHTML='Why these don\u2019t add to the total: \u201CInvested\u201D and \u201Cgain\u201D describe your <b>securities only</b>. Your '+fmt(DATA.costBasis)+' cost basis grew into about '+fmt(DATA.marketValue)+' of stocks &amp; funds (the +'+fmt(DATA.totalGain)+' gain). Add '+fmt(DATA.cash)+' cash and you reach the '+fmt(DATA.totalValue)+' total.';
   document.getElementById('holdCount').textContent=DATA.holdings.length;
-  drawDonut();drawLeaders();renderHoldings('mktVal');renderEducation();renderEvents();
+  drawDonut();drawLeaders();renderHoldings('mktVal');renderEducation();renderEvents();const _p=document.getElementById('ponyCard');if(_p){_p.classList.remove('celebrate');void _p.offsetWidth;_p.classList.add('celebrate');}
 }
 
 function drawDonut(){
