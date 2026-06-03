@@ -127,6 +127,7 @@ footer img{width:30px;opacity:.6;margin-bottom:8px}
 .vote-btn:hover{border-color:var(--gold)}
 .vote-btn.sel{background:var(--grad);color:#1a1407;border-color:transparent;font-weight:700}
 </style>
+<style>.m-in{background:var(--bg);border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;min-width:115px;flex:1}</style>
 </head>
 <body>
 
@@ -164,6 +165,8 @@ footer img{width:30px;opacity:.6;margin-bottom:8px}
       </div>
     </div>
   </div>
+
+  <div id="memberBar" style="margin:0 0 12px"></div>
 
   <div class="card" style="animation-delay:.02s">
     <div style="display:flex;gap:20px;align-items:stretch;flex-wrap:wrap">
@@ -208,15 +211,16 @@ footer img{width:30px;opacity:.6;margin-bottom:8px}
     </div>
     <div style="margin-top:14px;border-top:1px solid var(--line);padding-top:12px">
       <div class="label" style="margin-bottom:8px">&#128499;&#65039; Club Vote</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="vote-btn" data-choice="approve" onclick="castVote('approve')">&#9989; Approve</button>
-        <button class="vote-btn" data-choice="approve_small" onclick="castVote('approve_small')">&#128310; Approve (smaller)</button>
-        <button class="vote-btn" data-choice="reject" onclick="castVote('reject')">&#10060; Reject</button>
-        <button class="vote-btn" data-choice="abstain" onclick="castVote('abstain')">&#9995; Abstain</button>
-      </div>
-      <div id="voteStatus" class="note" style="margin-top:10px">Tap your choice &mdash; live tally turns on once member logins go live.</div>
-      <div id="voteResults" style="margin-top:10px"></div>
+      <div id="voteArea"></div>
+      <div id="voteResults" style="margin-top:12px"></div>
     </div>
+  </div>
+
+  <div class="card" style="animation-delay:.09s">
+    <div class="label" style="color:var(--gold)">&#9971; Golf Tournament &middot; When Are You Free?</div>
+    <div class="note" style="margin-top:6px">Tap every weekend that works for you &mdash; best dates rise to the top. Not private, so we can see who&rsquo;s in.</div>
+    <div id="pollLead" style="margin-top:12px"></div>
+    <div id="pollList" style="margin-top:10px;max-height:360px;overflow:auto"></div>
   </div>
 
   <div class="card" style="animation-delay:.10s">
@@ -361,15 +365,14 @@ function tick(s){ const u=yUrl(s); const c=isCusip(s); const lbl=c?'###':s; cons
 
 function ponyConfetti(){
   const host=document.getElementById('ponyCard'); if(!host) return;
-  if(matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const layer=document.createElement('div');
   layer.style.cssText='position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none;z-index:5';
   host.appendChild(layer);
   const W=host.clientWidth||320,H=host.clientHeight||90;
   const cols=['#d4af37','#f6e7a8','#7fd6a0','#ffffff','#e9c46a','#fffbe9','#9a8330'];
   const P=[];
-  for(let k=0;k<120;k++){
-    const e=document.createElement('div'); const w=5+Math.random()*7;
+  for(let k=0;k<170;k++){
+    const e=document.createElement('div'); const w=6+Math.random()*9;
     e.style.cssText='position:absolute;width:'+w+'px;height:'+(w*0.5)+'px;background:'+cols[k%cols.length]+';border-radius:1px';
     layer.appendChild(e);
     const a=Math.random()*Math.PI*2, sp=2+Math.random()*9;
@@ -379,9 +382,9 @@ function ponyConfetti(){
   (function step(){
     t++; let alive=false;
     for(const q of P){ q.vy+=0.35; q.x+=q.vx; q.y+=q.vy; q.vx*=0.99; q.r+=q.vr;
-      const o=Math.max(0,1-t/74); if(o>0) alive=true;
+      const o=Math.max(0,1-t/110); if(o>0) alive=true;
       q.e.style.transform='translate('+q.x+'px,'+q.y+'px) rotate('+q.r+'deg)'; q.e.style.opacity=o; }
-    if(alive&&t<80) requestAnimationFrame(step); else layer.remove();
+    if(alive&&t<118) requestAnimationFrame(step); else layer.remove();
   })();
 }
 function toggleProp(){const m=document.getElementById('propMore'),b=document.getElementById('propBtn');const open=m.style.display!=='none';m.style.display=open?'none':'block';b.innerHTML=open?'Read the full thesis \u25BC':'Hide thesis \u25B2';}
@@ -398,7 +401,7 @@ function render(){
   document.getElementById('inlineGain').textContent=pct1(DATA.totalGainPct);
   document.getElementById('mathNote').innerHTML='Why these don\u2019t add to the total: \u201CInvested\u201D and \u201Cgain\u201D describe your <b>securities only</b>. Your '+fmt(DATA.costBasis)+' cost basis grew into about '+fmt(DATA.marketValue)+' of stocks &amp; funds (the +'+fmt(DATA.totalGain)+' gain). Add '+fmt(DATA.cash)+' cash and you reach the '+fmt(DATA.totalValue)+' total.';
   document.getElementById('holdCount').textContent=DATA.holdings.length;
-  drawDonut();drawLeaders();renderHoldings('mktVal');renderEducation();renderEvents();ponyConfetti();
+  drawDonut();drawLeaders();renderHoldings('mktVal');renderEducation();renderEvents();setTimeout(ponyConfetti,1500);clubInit();
 }
 
 function drawDonut(){
@@ -458,6 +461,58 @@ function toggleBooks(){
   if(f.style.display==='block'){f.style.display='none';b.innerHTML='Show full 15-book list \u25BC';}
   else{f.style.display='block';b.innerHTML='Hide full list \u25B2';}
 }
+
+/* ===== Clydesdale club: members, voting, golf poll (Supabase) ===== */
+const SB_URL='https://nvhsvcesvkudgttmbpvg.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52aHN2Y2Vzdmt1ZGd0dG1icHZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0OTgyMjgsImV4cCI6MjA5NjA3NDIyOH0.fe6ADWAmYWJcHWB8cGU5Zz31HJs-37lIQpK63j_453U';
+const SB_H={'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY};
+async function sbRpc(fn,args){const r=await fetch(SB_URL+'/rest/v1/rpc/'+fn,{method:'POST',headers:{...SB_H,'Content-Type':'application/json'},body:JSON.stringify(args)});if(!r.ok)throw new Error((await r.text()).slice(0,140));const _t=await r.text();return _t?JSON.parse(_t):null;}
+async function sbGet(path){const r=await fetch(SB_URL+'/rest/v1/'+path,{headers:SB_H});if(!r.ok)throw new Error((await r.text()).slice(0,140));return r.json();}
+function esc(x){return (x||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function flash(m){let t=document.getElementById('clyToast');if(!t){t=document.createElement('div');t.id='clyToast';t.style.cssText='position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#1a1407;color:var(--gold);border:1px solid var(--gold);border-radius:10px;padding:10px 16px;font-size:13px;z-index:99;box-shadow:0 6px 20px rgba(0,0,0,.45);transition:opacity .3s';document.body.appendChild(t);}t.textContent=m;t.style.opacity='1';clearTimeout(t._tm);t._tm=setTimeout(()=>{t.style.opacity='0';},2400);}
+
+let MEMBER=null; try{MEMBER=JSON.parse(localStorage.getItem('cly_member')||'null');}catch(e){}
+let MY_VOTE=null;
+function restoreMyVote(){MY_VOTE=MEMBER?(localStorage.getItem('cly_vote_'+MEMBER.id)||null):null;}
+function clubInit(){restoreMyVote();renderMemberUI();loadVote();loadPoll();}
+function needLogin(){if(!MEMBER){const b=document.getElementById('memberBar');if(b)b.scrollIntoView({block:'center'});flash('Sign in at the top first.');return true;}return false;}
+
+function authHTML(){
+  if(MEMBER) return '<div style="background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="font-size:14px">&#128075; Welcome, <b class="gold-text">'+esc(MEMBER.name)+'</b></span><a href="#" onclick="memberLogout();return false" class="note" style="margin-left:auto;color:var(--muted)">sign out</a></div>';
+  return '<div style="background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 14px"><div class="note" style="margin-bottom:6px">Sign in to vote &amp; RSVP &mdash; your email + last name</div><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><input class="m-in" id="mEmail" type="email" placeholder="email" autocomplete="email"><input class="m-in" id="mCode" type="text" placeholder="last name" autocomplete="off"><button class="vote-btn" onclick="memberLogin()">Sign in</button><span id="mLoginStatus" class="note"></span></div></div>';
+}
+function renderMemberUI(){const el=document.getElementById('memberBar');if(el)el.innerHTML=authHTML();}
+async function memberLogin(){const email=(document.getElementById('mEmail').value||'').trim();const code=(document.getElementById('mCode').value||'').trim();const st=document.getElementById('mLoginStatus');if(!email||!code){if(st)st.textContent='Enter email + last name.';return;}if(st)st.textContent='Checking…';try{const rows=await sbRpc('member_login',{p_email:email,p_code:code});if(!rows.length){if(st)st.textContent='No match — check spelling.';return;}MEMBER={id:rows[0].id,name:rows[0].name,email:email};localStorage.setItem('cly_member',JSON.stringify(MEMBER));restoreMyVote();renderMemberUI();loadVote();loadPoll();flash('Welcome, '+MEMBER.name.split(' ')[0]+'!');}catch(e){if(st)st.textContent='Error: '+e.message;}}
+function memberLogout(){MEMBER=null;MY_VOTE=null;localStorage.removeItem('cly_member');renderMemberUI();loadVote();loadPoll();}
+
+let VOTE_TALLY=[],VOTE_REASONS=[];
+async function loadVote(){try{VOTE_TALLY=await sbGet('vote_tallies?proposal_id=eq.1&select=choice,votes');VOTE_REASONS=await sbGet('vote_reasons?proposal_id=eq.1&select=reason');}catch(e){VOTE_TALLY=[];VOTE_REASONS=[];}renderVote();}
+function vc(c){const r=VOTE_TALLY.find(x=>x.choice===c);return r?r.votes:0;}
+function vbar(label,n,pct,color){return '<div style="display:flex;align-items:center;gap:8px;margin-top:5px"><div style="width:30px;font-size:12px;color:var(--muted)">'+label+'</div><div style="flex:1;background:rgba(255,255,255,.06);border-radius:6px;height:14px;overflow:hidden"><div style="width:'+pct+'%;height:100%;background:'+color+'"></div></div><div style="width:64px;text-align:right;font-size:12px">'+n+' ('+pct+'%)</div></div>';}
+function renderVote(){
+  const area=document.getElementById('voteArea');if(!area)return;
+  const yes=vc('yes'),no=vc('no'),tot=yes+no,pct=v=>tot?Math.round(v/tot*100):0;
+  area.innerHTML='<div style="display:flex;gap:8px"><button class="vote-btn '+(MY_VOTE==='yes'?'sel':'')+'" onclick="voteYes()">&#128077; Yes</button><button class="vote-btn '+(MY_VOTE==='no'?'sel':'')+'" onclick="voteNoStart()">&#128078; No</button></div><div id="noReasonWrap" style="display:'+(MY_VOTE==='no'?'block':'none')+';margin-top:8px"><textarea id="noReason" placeholder="(optional) why not? shown anonymously" rows="2" style="width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:8px;font-family:inherit;font-size:13px"></textarea><button class="vote-btn" style="margin-top:6px" onclick="voteNoSubmit()">Submit No vote</button></div>';
+  const res=document.getElementById('voteResults');
+  res.innerHTML='<div class="note" style="margin-bottom:4px">'+tot+' vote'+(tot===1?'':'s')+' so far'+(MY_VOTE?' &middot; you voted <b style="color:var(--gold)">'+MY_VOTE.toUpperCase()+'</b>':'')+'</div>'+vbar('Yes',yes,pct(yes),'var(--green)')+vbar('No',no,pct(no),'var(--red)')+(VOTE_REASONS.length?'<div class="note" style="margin-top:10px">Reasons against (anonymous):</div>'+VOTE_REASONS.map(r=>'<div style="font-size:12px;color:var(--muted);border-left:2px solid var(--red);padding-left:8px;margin-top:5px">'+esc(r.reason)+'</div>').join(''):'');
+}
+function voteYes(){if(needLogin())return;doVote('yes',null);}
+function voteNoStart(){if(needLogin())return;const w=document.getElementById('noReasonWrap');w.style.display='block';}
+function voteNoSubmit(){if(needLogin())return;const t=document.getElementById('noReason');doVote('no',(t&&t.value.trim())||null);}
+async function doVote(choice,reason){try{await sbRpc('cast_vote',{p_member_id:MEMBER.id,p_proposal_id:1,p_choice:choice,p_reason:reason});MY_VOTE=choice;localStorage.setItem('cly_vote_'+MEMBER.id,choice);flash('Vote recorded: '+choice.toUpperCase());loadVote();}catch(e){flash('Could not save vote');}}
+
+let POLL=null,POLL_OPTS=[],POLL_CNT={},POLL_DETAIL=[],MY_PICKS=new Set();
+async function loadPoll(){try{const ps=await sbGet('polls?select=id,question&kind=eq.multi&limit=1');if(!ps.length)return;POLL=ps[0];POLL_OPTS=await sbGet('poll_options?select=id,label,sort&poll_id=eq.'+POLL.id+'&order=sort.asc');POLL_DETAIL=await sbGet('poll_detail?select=option_id,name&poll_id=eq.'+POLL.id);POLL_CNT={};POLL_DETAIL.forEach(d=>{POLL_CNT[d.option_id]=(POLL_CNT[d.option_id]||0)+1;});MY_PICKS=new Set(MEMBER?POLL_DETAIL.filter(d=>d.name===MEMBER.name).map(d=>d.option_id):[]);}catch(e){console.warn(e);}renderPoll();}
+function renderPoll(){
+  const lead=document.getElementById('pollLead'),list=document.getElementById('pollList');if(!list)return;
+  const ranked=POLL_OPTS.map(o=>({o,n:POLL_CNT[o.id]||0})).sort((a,b)=>b.n-a.n||a.o.sort-b.o.sort);
+  const top=ranked[0],sec=ranked[1];
+  lead.innerHTML=(top&&top.n>0)?'<div style="display:flex;gap:10px;flex-wrap:wrap"><div style="flex:1;min-width:150px;background:var(--panel);border:1px solid rgba(212,175,55,.55);border-radius:10px;padding:10px"><div class="note">&#127942; Leading date</div><div style="font-family:Fraunces,serif;font-size:18px">'+top.o.label+'</div><div class="note">'+top.n+' free</div></div>'+((sec&&sec.n>0)?'<div style="flex:1;min-width:150px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px"><div class="note">Runner-up</div><div style="font-family:Fraunces,serif;font-size:18px">'+sec.o.label+'</div><div class="note">'+sec.n+' free</div></div>':'')+'</div>':'<div class="note">No picks yet — be the first to mark your weekends.</div>';
+  const mx=Math.max(1,...ranked.map(r=>r.n));
+  list.innerHTML=POLL_OPTS.map(o=>{const n=POLL_CNT[o.id]||0,mine=MY_PICKS.has(o.id);const nm=POLL_DETAIL.filter(d=>d.option_id===o.id).map(d=>d.name.split(' ')[0]);const who=nm.length?'<span class="note" style="font-size:11px"> &middot; '+nm.slice(0,6).join(', ')+(nm.length>6?' +'+(nm.length-6):'')+'</span>':'';return '<div onclick="togglePick('+o.id+')" style="display:flex;align-items:center;gap:10px;padding:7px 9px;border-radius:8px;cursor:pointer;margin-top:4px;border:1px solid '+(mine?'var(--gold)':'var(--line)')+';background:'+(mine?'rgba(212,175,55,.08)':'transparent')+'"><div style="width:18px;height:18px;border-radius:5px;flex:none;display:flex;align-items:center;justify-content:center;color:#1a1407;font-size:12px;font-weight:700;border:1px solid '+(mine?'transparent':'var(--muted)')+';background:'+(mine?'var(--grad)':'transparent')+'">'+(mine?'✓':'')+'</div><div style="flex:1"><span style="font-size:14px">'+o.label+'</span>'+who+'</div><div style="width:60px;background:rgba(255,255,255,.06);border-radius:5px;height:10px;overflow:hidden"><div style="width:'+Math.round(n/mx*100)+'%;height:100%;background:var(--grad)"></div></div><div style="width:20px;text-align:right;font-size:12px;color:var(--muted)">'+n+'</div></div>';}).join('');
+}
+async function togglePick(id){if(needLogin())return;const on=!MY_PICKS.has(id);if(on)MY_PICKS.add(id);else MY_PICKS.delete(id);renderPoll();try{await sbRpc('cast_poll_vote',{p_member_id:MEMBER.id,p_poll_id:POLL.id,p_option_id:id,p_on:on});}catch(e){flash('Could not save pick');}loadPoll();}
+
 </script>
 </body>
 </html>
