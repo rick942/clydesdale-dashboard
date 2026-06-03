@@ -120,20 +120,12 @@ footer{text-align:center;color:var(--muted);font-size:11px;margin-top:22px;line-
 footer img{width:30px;opacity:.6;margin-bottom:8px}
 </style>
 <style>
-#ponyCard{position:relative;border-radius:16px;margin:0 0 14px;padding:2px;overflow:hidden;background:var(--line);isolation:isolate}
-#ponyCard .pony-ring{position:absolute;inset:-65%;z-index:0;border-radius:50%;opacity:0;filter:blur(3px);
-  background:conic-gradient(from 0deg,transparent 0deg,transparent 250deg,rgba(212,175,55,.18) 300deg,#f6e7a8 342deg,#fffbe9 358deg,#f6e7a8 360deg)}
-#ponyCard .pony-inner{position:relative;z-index:1;background:var(--panel);border-radius:14px;padding:16px 20px;border:1px solid rgba(212,175,55,.45)}
-#ponyCard.celebrate .pony-ring{animation:ponySpin 2.4s cubic-bezier(.55,0,.85,1) forwards}
-@keyframes ponySpin{
-  0%{transform:rotate(0deg);opacity:.25}
-  60%{opacity:.9}
-  82%{opacity:1;filter:blur(2px) brightness(1.7)}
-  92%{opacity:1;filter:blur(1px) brightness(2.1)}
-  100%{transform:rotate(1800deg);opacity:0;filter:blur(5px) brightness(1)}
-}
+#ponyCard{position:relative;border-radius:16px;margin:0 0 14px;padding:2px;background:var(--grad);box-shadow:0 0 22px rgba(212,175,55,.18)}
+#ponyCard .pony-inner{position:relative;z-index:1;background:var(--panel);border-radius:14px;padding:16px 20px}
 #ponyCard .pony-emoji{font-size:30px;line-height:1}
-@media (prefers-reduced-motion:reduce){#ponyCard.celebrate .pony-ring{animation:none}}
+.vote-btn{background:var(--panel);border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:9px 13px;font-size:13px;cursor:pointer;transition:.15s;font-family:inherit}
+.vote-btn:hover{border-color:var(--gold)}
+.vote-btn.sel{background:var(--grad);color:#1a1407;border-color:transparent;font-weight:700}
 </style>
 </head>
 <body>
@@ -160,13 +152,13 @@ footer img{width:30px;opacity:.6;margin-bottom:8px}
   </header>
 
   <div id="ponyCard">
-    <div class="pony-ring"></div>
+    
     <div class="pony-inner">
       <div style="display:flex;align-items:center;gap:14px">
         <div class="pony-emoji">&#128014;</div>
         <div style="flex:1">
           <div class="label" style="color:var(--gold)">Pony of the Month</div>
-          <div class="gold-text" style="font-family:'Fraunces',serif;font-size:24px;margin-top:2px">Evan Stoll</div>
+          <div class="gold-text" style="font-family:'Fraunces',serif;font-size:24px;margin-top:2px">Evan Bruegenhemke</div>
           <div style="color:var(--muted);font-size:13px;margin-top:4px">Read <b style="color:var(--txt)">The Psychology of Money</b> off the club reading list. &#128218;</div>
         </div>
       </div>
@@ -202,6 +194,31 @@ footer img{width:30px;opacity:.6;margin-bottom:8px}
     <div class="note" id="mathNote"></div>
   </div>
 
+  <div class="card" style="animation-delay:.08s">
+    <div class="label" style="color:var(--gold)">&#128203; Stock Proposal &middot; Up For Vote</div>
+    <div style="font-family:'Fraunces',serif;font-size:23px;margin-top:4px">EquipmentShare <span style="color:var(--muted);font-size:15px">(NASDAQ: EQPT)</span></div>
+    <div style="color:var(--muted);font-size:12px;margin-top:2px">Proposed by Sean Corrigan</div>
+    <div class="note" style="margin-top:10px;line-height:1.5">Initiate <b style="color:var(--txt)">~100 shares (~$2,500&ndash;$3,500)</b>, about <b style="color:var(--txt)">2&ndash;3%</b> of the club &mdash; diversifying out of heavy mega-cap tech (GOOG, AMZN, ASML, CRWD, MPWR) into <b style="color:var(--txt)">industrials &amp; infrastructure</b>. EquipmentShare rents construction equipment and runs a jobsite-tech platform (&ldquo;T3&rdquo;), HQ&rsquo;d in Columbia, MO.</div>
+    <button class="more-btn" id="propBtn" onclick="toggleProp()">Read the full thesis &#9660;</button>
+    <div id="propMore" style="display:none;margin-top:8px;color:var(--muted);font-size:13px;line-height:1.55">
+      <b style="color:var(--green)">Thesis:</b> Rides U.S. infrastructure spend, manufacturing reshoring, and construction-tech adoption; early growth phase with national-expansion runway.<br><br>
+      <b style="color:var(--green)">Strengths:</b> Rapid revenue growth, market-share gains, the T3 software moat, and real diversification vs. our tech-heavy book.<br><br>
+      <b style="color:var(--red)">Risks:</b> Economic cyclicality, capital-intensive fleet, big competitors (United Rentals, Herc, Sunbelt), and recent-IPO volatility.<br><br>
+      <b style="color:var(--gold)">Strategy:</b> ~100 shares, 3&ndash;5 year hold; watch revenue growth, branch expansion, debt, utilization, and margins.
+    </div>
+    <div style="margin-top:14px;border-top:1px solid var(--line);padding-top:12px">
+      <div class="label" style="margin-bottom:8px">&#128499;&#65039; Club Vote</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="vote-btn" data-choice="approve" onclick="castVote('approve')">&#9989; Approve</button>
+        <button class="vote-btn" data-choice="approve_small" onclick="castVote('approve_small')">&#128310; Approve (smaller)</button>
+        <button class="vote-btn" data-choice="reject" onclick="castVote('reject')">&#10060; Reject</button>
+        <button class="vote-btn" data-choice="abstain" onclick="castVote('abstain')">&#9995; Abstain</button>
+      </div>
+      <div id="voteStatus" class="note" style="margin-top:10px">Tap your choice &mdash; live tally turns on once member logins go live.</div>
+      <div id="voteResults" style="margin-top:10px"></div>
+    </div>
+  </div>
+
   <div class="card" style="animation-delay:.10s">
     <div class="label">Allocation</div>
     <div class="alloc-wrap">
@@ -218,21 +235,6 @@ footer img{width:30px;opacity:.6;margin-bottom:8px}
     <div class="note">Tap any ticker to open its Yahoo Finance page.</div>
   </div>
 
-  <div class="card" style="animation-delay:.22s">
-    <div class="label" style="margin-bottom:2px">Holdings &middot; <span id="holdCount"></span> positions</div>
-    <div class="tabs">
-      <div class="tab on" data-sort="mktVal">By Value</div>
-      <div class="tab" data-sort="glPct">By Gain %</div>
-      <div class="tab" data-sort="dayPct">Today</div>
-    </div>
-    <div id="holdings"></div>
-  </div>
-
-  <div class="card" style="animation-delay:.28s">
-    <div class="label">Performance vs S&amp;P 500</div>
-    <div class="note" style="margin-top:8px">A time-weighted return line &mdash; your investing skill with deposits stripped out, charted against the S&amp;P 500 &mdash; builds here as the live Schwab feed logs a daily snapshot. So far the club is up <b id="inlineGain"></b> on invested cost.</div>
-  </div>
-
   <div class="card" style="animation-delay:.34s">
     <div class="label">The Paddock &middot; Learn</div>
     <div class="term">
@@ -246,6 +248,21 @@ footer img{width:30px;opacity:.6;margin-bottom:8px}
     <div class="books" id="books"></div>
     <button class="more-btn" id="moreBtn" onclick="toggleBooks()">Show full 15-book list &#9660;</button>
     <div id="fullList" class="books"></div>
+  </div>
+
+  <div class="card" style="animation-delay:.22s">
+    <div class="label" style="margin-bottom:2px">Holdings &middot; <span id="holdCount"></span> positions</div>
+    <div class="tabs">
+      <div class="tab on" data-sort="mktVal">By Value</div>
+      <div class="tab" data-sort="glPct">By Gain %</div>
+      <div class="tab" data-sort="dayPct">Today</div>
+    </div>
+    <div id="holdings"></div>
+  </div>
+
+  <div class="card" style="animation-delay:.28s">
+    <div class="label">Performance vs S&amp;P 500</div>
+    <div class="note" style="margin-top:8px">A time-weighted return line &mdash; your investing skill with deposits stripped out, charted against the S&amp;P 500 &mdash; builds here as the live Schwab feed logs a daily snapshot. So far the club is up <b id="inlineGain"></b> on invested cost.</div>
   </div>
 
   <footer>
@@ -342,6 +359,33 @@ function isCusip(s){ return /^[A-Z0-9]{9}$/.test(s) && /[0-9]/.test(s); }
 function yUrl(s){ if(isCusip(s)) return 'https://www.google.com/search?q='+encodeURIComponent(s+' stock cusip'); return 'https://finance.yahoo.com/quote/'+encodeURIComponent(s.replace('/','-')); }
 function tick(s){ const u=yUrl(s); const c=isCusip(s); const lbl=c?'###':s; const ti=c?` title="Delisted security (CUSIP ${s})"`:''; return `<a href="${u}" target="_blank" rel="noopener"${ti}>${lbl}</a>`; }
 
+function ponyConfetti(){
+  const host=document.getElementById('ponyCard'); if(!host) return;
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const layer=document.createElement('div');
+  layer.style.cssText='position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none;z-index:5';
+  host.appendChild(layer);
+  const W=host.clientWidth||320,H=host.clientHeight||90;
+  const cols=['#d4af37','#f6e7a8','#7fd6a0','#ffffff','#e9c46a','#fffbe9','#9a8330'];
+  const P=[];
+  for(let k=0;k<120;k++){
+    const e=document.createElement('div'); const w=5+Math.random()*7;
+    e.style.cssText='position:absolute;width:'+w+'px;height:'+(w*0.5)+'px;background:'+cols[k%cols.length]+';border-radius:1px';
+    layer.appendChild(e);
+    const a=Math.random()*Math.PI*2, sp=2+Math.random()*9;
+    P.push({e,x:W/2,y:H/2,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-3,r:Math.random()*360,vr:(Math.random()-0.5)*22});
+  }
+  let t=0;
+  (function step(){
+    t++; let alive=false;
+    for(const q of P){ q.vy+=0.35; q.x+=q.vx; q.y+=q.vy; q.vx*=0.99; q.r+=q.vr;
+      const o=Math.max(0,1-t/74); if(o>0) alive=true;
+      q.e.style.transform='translate('+q.x+'px,'+q.y+'px) rotate('+q.r+'deg)'; q.e.style.opacity=o; }
+    if(alive&&t<80) requestAnimationFrame(step); else layer.remove();
+  })();
+}
+function toggleProp(){const m=document.getElementById('propMore'),b=document.getElementById('propBtn');const open=m.style.display!=='none';m.style.display=open?'none':'block';b.innerHTML=open?'Read the full thesis \u25BC':'Hide thesis \u25B2';}
+function castVote(choice){document.querySelectorAll('.vote-btn').forEach(b=>b.classList.toggle('sel',b.getAttribute('data-choice')===choice));document.getElementById('voteStatus').innerHTML='Your pick is noted \u2014 <b>live voting &amp; results turn on shortly.</b>';}
 function render(){
   document.getElementById('asof').textContent='As of '+DATA.asOf;
   document.getElementById('totalVal').textContent=fmt2(DATA.totalValue);
@@ -354,7 +398,7 @@ function render(){
   document.getElementById('inlineGain').textContent=pct1(DATA.totalGainPct);
   document.getElementById('mathNote').innerHTML='Why these don\u2019t add to the total: \u201CInvested\u201D and \u201Cgain\u201D describe your <b>securities only</b>. Your '+fmt(DATA.costBasis)+' cost basis grew into about '+fmt(DATA.marketValue)+' of stocks &amp; funds (the +'+fmt(DATA.totalGain)+' gain). Add '+fmt(DATA.cash)+' cash and you reach the '+fmt(DATA.totalValue)+' total.';
   document.getElementById('holdCount').textContent=DATA.holdings.length;
-  drawDonut();drawLeaders();renderHoldings('mktVal');renderEducation();renderEvents();const _p=document.getElementById('ponyCard');if(_p){_p.classList.remove('celebrate');void _p.offsetWidth;_p.classList.add('celebrate');}
+  drawDonut();drawLeaders();renderHoldings('mktVal');renderEducation();renderEvents();ponyConfetti();
 }
 
 function drawDonut(){
