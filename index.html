@@ -143,6 +143,23 @@ footer img{width:30px;opacity:.6;margin-bottom:8px}
     <a class="schwab-btn" href="https://client.schwab.com/Areas/Access/Login" target="_blank" rel="noopener">Log in to Schwab &#8599;</a>
   </header>
 
+  <div class="card" style="animation-delay:.02s">
+    <div style="display:flex;gap:20px;align-items:stretch;flex-wrap:wrap">
+      <div style="flex:1;min-width:160px">
+        <div class="label">Next Meeting</div>
+        <div id="mtgDate" style="font-family:'Fraunces',serif;font-size:21px;margin-top:6px">TBD</div>
+        <div id="mtgCountdown" style="color:#d4af37;font-size:12px;letter-spacing:1.5px;margin-top:5px;text-transform:uppercase"></div>
+      </div>
+      <div style="width:1px;background:rgba(255,255,255,.08)"></div>
+      <div style="flex:1;min-width:160px">
+        <div class="label">Next Event</div>
+        <div id="evName" style="font-family:'Fraunces',serif;font-size:21px;margin-top:6px">Golf Tournament</div>
+        <div style="color:var(--muted);font-size:13px;margin-top:6px">Date: <b id="evDate" style="color:#fff">TBD</b></div>
+        <div style="color:var(--muted);font-size:13px;margin-top:2px">Location: <b id="evLoc" style="color:#fff">TBD</b></div>
+      </div>
+    </div>
+  </div>
+
   <div class="card hero" style="animation-delay:.04s">
     <div class="label">Total Club Value</div>
     <div class="val" id="totalVal"></div>
@@ -183,7 +200,7 @@ footer img{width:30px;opacity:.6;margin-bottom:8px}
 
   <div class="card" style="animation-delay:.28s">
     <div class="label">Performance vs S&amp;P 500</div>
-    <div class="note" style="margin-top:8px">A true time-weighted return line (your investing skill, deposits stripped out, charted against the S&amp;P) unlocks once the Schwab API is live and logging a daily snapshot &mdash; it needs history this single export can't provide yet. For now: the club is up <b id="inlineGain"></b> on invested cost.</div>
+    <div class="note" style="margin-top:8px">A time-weighted return line &mdash; your investing skill with deposits stripped out, charted against the S&amp;P 500 &mdash; builds here as the live Schwab feed logs a daily snapshot. So far the club is up <b id="inlineGain"></b> on invested cost.</div>
   </div>
 
   <div class="card" style="animation-delay:.34s">
@@ -209,6 +226,22 @@ footer img{width:30px;opacity:.6;margin-bottom:8px}
 
 <script>
 let DATA = null;
+
+// ====== EDIT THESE: club meeting + next event ======
+const MEETING_AT = "2026-06-17T18:30:00";   // next meeting date & time, 24h (year-mo-dyThh:mm:ss)
+const NEXT_EVENT = { name:"Golf Tournament", date:"TBD", location:"TBD" };
+// ===================================================
+function renderEvents(){
+  document.getElementById('evName').textContent=NEXT_EVENT.name;
+  document.getElementById('evDate').textContent=NEXT_EVENT.date;
+  document.getElementById('evLoc').textContent=NEXT_EVENT.location;
+  const md=document.getElementById('mtgDate'), mc=document.getElementById('mtgCountdown');
+  const t=new Date(MEETING_AT);
+  if(isNaN(t.getTime())){ md.textContent='TBD'; mc.textContent=''; return; }
+  md.textContent=t.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})+' \u00b7 '+t.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  const days=Math.ceil((t.getTime()-Date.now())/86400000);
+  mc.textContent = days>1?(days+' days away') : days===1?'Tomorrow' : days===0?'Today' : 'Completed';
+}
 
 const TERMS = [
   ["Margin of Safety","Buying an asset for meaningfully less than your estimate of its true worth, so you're protected even if your analysis is a bit off.","marginofsafety"],
@@ -275,8 +308,9 @@ const fmt=n=>n.toLocaleString('en-US',{style:'currency',currency:'USD',minimumFr
 const fmt2=n=>n.toLocaleString('en-US',{style:'currency',currency:'USD',minimumFractionDigits:2,maximumFractionDigits:2});
 const pct=n=>(n>=0?'+':'')+n.toFixed(2)+'%';
 const pct1=n=>(n>=0?'+':'')+n.toFixed(1)+'%';
-function yUrl(s){ if(s==='82452T305') return null; return 'https://finance.yahoo.com/quote/'+encodeURIComponent(s.replace('/','-')); }
-function tick(s){ const u=yUrl(s); return u?`<a href="${u}" target="_blank" rel="noopener">${s}</a>`:`<span style="color:var(--muted)">${s}</span>`; }
+function isCusip(s){ return /^[A-Z0-9]{9}$/.test(s) && /[0-9]/.test(s); }
+function yUrl(s){ if(isCusip(s)) return 'https://www.google.com/search?q='+encodeURIComponent(s+' stock cusip'); return 'https://finance.yahoo.com/quote/'+encodeURIComponent(s.replace('/','-')); }
+function tick(s){ const u=yUrl(s); const c=isCusip(s); const lbl=c?'###':s; const ti=c?` title="Delisted security (CUSIP ${s})"`:''; return `<a href="${u}" target="_blank" rel="noopener"${ti}>${lbl}</a>`; }
 
 function render(){
   document.getElementById('asof').textContent='As of '+DATA.asOf;
@@ -290,7 +324,7 @@ function render(){
   document.getElementById('inlineGain').textContent=pct1(DATA.totalGainPct);
   document.getElementById('mathNote').innerHTML='Why these don\u2019t add to the total: \u201CInvested\u201D and \u201Cgain\u201D describe your <b>securities only</b>. Your '+fmt(DATA.costBasis)+' cost basis grew into about '+fmt(DATA.marketValue)+' of stocks &amp; funds (the +'+fmt(DATA.totalGain)+' gain). Add '+fmt(DATA.cash)+' cash and you reach the '+fmt(DATA.totalValue)+' total.';
   document.getElementById('holdCount').textContent=DATA.holdings.length;
-  drawDonut();drawLeaders();renderHoldings('mktVal');renderEducation();
+  drawDonut();drawLeaders();renderHoldings('mktVal');renderEducation();renderEvents();
 }
 
 function drawDonut(){
