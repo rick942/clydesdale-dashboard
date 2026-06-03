@@ -1,0 +1,28 @@
+name: Update dashboard data
+on:
+  workflow_dispatch:
+  # schedule:            # enabled after privacy decision
+  #   - cron: '5,35 13-20 * * 1-5'
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Fetch Schwab holdings
+        env:
+          SCHWAB_APP_KEY: ${{ secrets.SCHWAB_APP_KEY }}
+          SCHWAB_APP_SECRET: ${{ secrets.SCHWAB_APP_SECRET }}
+          SCHWAB_REFRESH_TOKEN: ${{ secrets.SCHWAB_REFRESH_TOKEN }}
+        run: python3 scripts/fetch_schwab.py
+      - name: Commit if changed
+        run: |
+          git config user.name "clydesdale-bot"
+          git config user.email "actions@github.com"
+          git add -A data.json
+          git diff --cached --quiet || git commit -m "Update holdings [skip ci]"
+          git push
