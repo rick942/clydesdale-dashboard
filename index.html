@@ -226,6 +226,18 @@ footer img{width:30px;opacity:.6;margin-bottom:8px}
     </div>
   </div>
 
+  <div class="card" style="animation-delay:.09s">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="flex:1">
+        <div class="label" style="color:var(--gold)">&#128200; The Rail &middot; Member Watchlist</div>
+        <div class="note" style="margin-top:4px">Paper picks only &mdash; not club money. Tracked from the day you call it.</div>
+      </div>
+    </div>
+    <div id="watchAdd" style="margin-top:12px"></div>
+    <div id="watchList" style="margin-top:10px"></div>
+    <div class="note" id="watchFoot" style="margin-top:10px"></div>
+  </div>
+
   <div class="card" style="animation-delay:.10s">
     <div class="label">Allocation</div>
     <div class="alloc-wrap">
@@ -617,7 +629,86 @@ function esc(x){return (x||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>'
 function flash(m){let t=document.getElementById('clyToast');if(!t){t=document.createElement('div');t.id='clyToast';t.style.cssText='position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#1a1407;color:var(--gold);border:1px solid var(--gold);border-radius:10px;padding:10px 16px;font-size:13px;z-index:99;box-shadow:0 6px 20px rgba(0,0,0,.45);transition:opacity .3s';document.body.appendChild(t);}t.textContent=m;t.style.opacity='1';clearTimeout(t._tm);t._tm=setTimeout(()=>{t.style.opacity='0';},2400);}
 
 let MEMBER=null; try{MEMBER=JSON.parse(localStorage.getItem('cly_member')||'null');}catch(e){}
-function clubInit(){renderMemberUI();loadVote();loadPoll();}
+function clubInit(){renderMemberUI();loadVote();loadPoll();loadWatch();}
+
+/* ===== The Rail: member watchlist =====
+   Picks live in Supabase; prices come from watchlist.json, written by its own
+   workflow job. Either source can be missing without breaking the other. */
+const WATCH_MAX=3;
+let WATCH=[],WATCH_PRICES={},WATCH_UPDATED=null;
+async function loadWatch(){
+  try{ WATCH=await sbGet('watchlist_public?select=id,ticker,note,added_at,name&order=added_at.asc'); }
+  catch(e){ WATCH=[]; }
+  try{
+    const j=await (await fetch('watchlist.json?t='+Date.now(),{cache:'no-store'})).json();
+    WATCH_PRICES={}; (j.items||[]).forEach(i=>{WATCH_PRICES[i.id]=i;}); WATCH_UPDATED=j.updated||null;
+  }catch(e){ WATCH_PRICES={}; }   // not priced yet — show the picks anyway
+  renderWatch();
+}
+function watchAddHTML(){
+  if(BACKEND_DOWN) return '';
+  if(!MEMBER) return '<div class="note">Sign in above to add a pick.</div>';
+  const mine=WATCH.filter(w=>w.name===MEMBER.name).length;
+  if(mine>=WATCH_MAX) return '<div class="note">You&rsquo;ve used all '+WATCH_MAX+' of your picks.</div>';
+  return '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">'+
+    '<input class="m-in" id="wTicker" type="text" placeholder="ticker" maxlength="8" style="width:96px;text-transform:uppercase">'+
+    '<input class="m-in" id="wNote" type="text" placeholder="why? (optional, locked in)" style="flex:1;min-width:150px">'+
+    '<button class="vote-btn" onclick="addWatch()">Add pick</button>'+
+    '<span id="wStatus" class="note"></span></div>'+
+    '<div class="note" style="margin-top:5px">'+(WATCH_MAX-mine)+' pick'+((WATCH_MAX-mine)===1?'':'s')+' left. You can undo within an hour &mdash; after that it&rsquo;s on the record.</div>';
+}
+function renderWatch(){
+  const add=document.getElementById('watchAdd'),list=document.getElementById('watchList'),foot=document.getElementById('watchFoot');
+  if(!list) return;
+  if(BACKEND_DOWN){ add.innerHTML=''; list.innerHTML=offlineNotice('The watchlist'); if(foot)foot.innerHTML=''; return; }
+  add.innerHTML=watchAddHTML();
+  if(!WATCH.length){ list.innerHTML='<div class="note" style="margin-top:6px">No picks yet &mdash; first one on the board sets the bar.</div>'; if(foot)foot.innerHTML=''; return; }
+  // best performer first; unpriced picks sit at the bottom
+  const rows=WATCH.map(w=>({w:w,p:WATCH_PRICES[w.id]||null}))
+    .sort((a,b)=>{const x=a.p&&a.p.pct!=null?a.p.pct:null,y=b.p&&b.p.pct!=null?b.p.pct:null;
+      if(x===null&&y===null)return 0; if(x===null)return 1; if(y===null)return -1; return y-x;});
+  list.innerHTML=rows.map((r,i)=>{
+    const p=r.p,pct=p&&p.pct!=null?p.pct:null;
+    const col=pct===null?'var(--muted)':(pct>=0?'var(--green)':'var(--red)');
+    const val=pct===null?'&mdash;':(pct>=0?'+':'')+pct.toFixed(1)+'%';
+    const since=p&&p.entryAt?new Date(p.entryAt):new Date(r.w.added_at);
+    const rank=pct===null?'':'<span class="mono" style="color:var(--muted);font-size:11px;width:16px;display:inline-block">'+(i+1)+'</span>';
+    const mine=MEMBER&&r.w.name===MEMBER.name;
+    const canUndo=mine&&((Date.now()-new Date(r.w.added_at).getTime())<3600000);
+    return '<div style="display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-top:1px solid var(--line)">'+
+      '<div style="flex:1">'+rank+
+        '<a href="'+yUrl(r.w.ticker)+'" target="_blank" rel="noopener" class="mono" style="font-size:15px;color:var(--gold);font-weight:700;text-decoration:none;border-bottom:1px dotted rgba(212,175,55,.55)">'+esc(r.w.ticker)+'</a>'+
+        '<div class="note" style="margin-top:2px">'+esc(r.w.name)+' &middot; since '+since.toLocaleDateString('en-US',{month:'short',day:'numeric'})+
+          (canUndo?' &middot; <a href="#" onclick="removeWatch('+r.w.id+');return false" style="color:var(--red)">undo</a>':'')+'</div>'+
+        (r.w.note?'<div style="font-size:12px;color:var(--muted);border-left:2px solid var(--line);padding-left:8px;margin-top:5px">'+esc(r.w.note)+'</div>':'')+
+      '</div>'+
+      '<div style="text-align:right"><div class="mono" style="font-size:15px;font-weight:700;color:'+col+'">'+val+'</div>'+
+        (p&&p.lastPrice!=null?'<div class="note">'+fmt2(p.lastPrice)+'</div>':'<div class="note">awaiting price</div>')+'</div></div>';
+  }).join('');
+  if(foot) foot.innerHTML=WATCH_UPDATED
+    ? 'Prices updated '+new Date(WATCH_UPDATED).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+'. Paper only — nothing here is club money.'
+    : 'Prices fill in on the next update. Paper only — nothing here is club money.';
+}
+async function addWatch(){
+  if(needLogin())return;
+  const t=document.getElementById('wTicker'),n=document.getElementById('wNote'),st=document.getElementById('wStatus');
+  const ticker=(t.value||'').trim(); if(!ticker){if(st)st.textContent='Enter a ticker.';return;}
+  if(st)st.textContent='Adding…';
+  try{
+    const msg=await sbRpc('add_watch',{p_member_id:MEMBER.id,p_ticker:ticker,p_note:(n.value||'').trim()||null});
+    if(msg!=='ok'){ if(st)st.textContent=msg; return; }
+    t.value='';n.value='';if(st)st.textContent='';
+    flash('Added '+ticker.toUpperCase()+' — the clock starts now');
+    loadWatch();
+  }catch(e){ if(st)st.textContent=e.offline?'Watchlist is offline.':'Could not add that.'; }
+}
+async function removeWatch(id){
+  if(needLogin())return;
+  try{
+    const msg=await sbRpc('remove_watch',{p_member_id:MEMBER.id,p_id:id});
+    flash(msg==='ok'?'Pick removed':msg); loadWatch();
+  }catch(e){ flash('Could not remove that'); }
+}
 function needLogin(){if(!MEMBER){const b=document.getElementById('memberBar');if(b)b.scrollIntoView({block:'center'});flash('Sign in at the top first.');return true;}return false;}
 
 function authHTML(){

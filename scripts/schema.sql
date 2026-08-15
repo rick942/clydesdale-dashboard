@@ -36,3 +36,51 @@ drop policy if exists "read polls" on polls; create policy "read polls" on polls
 drop policy if exists "read options" on poll_options; create policy "read options" on poll_options for select to anon using (true);
 grant select on vote_tallies, vote_reasons, member_directory, poll_tallies, poll_detail to anon;
 grant execute on function member_login(text), cast_vote(bigint,bigint,text,text), cast_poll_vote(bigint,bigint,bigint,boolean) to anon;
+
+-- ===== The Rail: member watchlist (paper picks, bragging rights) =====
+create table if not exists watchlist (
+  id bigint generated always as identity primary key,
+  member_id bigint references members(id) on delete cascade,
+  ticker text not null,
+  note text,
+  added_at timestamptz default now(),
+  unique(member_id, ticker)
+);
+create or replace view watchlist_public as
+  select w.id, w.ticker, w.note, w.added_at, m.name
+  from watchlist w join members m on m.id = w.member_id;
+create or replace function add_watch(p_member_id bigint, p_ticker text, p_note text)
+returns text language plpgsql security definer set search_path=public as $$
+declare t text; c int;
+begin
+  t := upper(regexp_replace(coalesce(p_ticker,''), '[^A-Za-z0-9.-]', '', 'g'));
+  if t = '' or length(t) > 8 then return 'That does not look like a ticker.'; end if;
+  select count(*) into c from watchlist where member_id = p_member_id;
+  if c >= 3 then return 'You already have 3 picks - remove one first.'; end if;
+  if exists (select 1 from watchlist where member_id = p_member_id and ticker = t) then
+    return 'You already picked ' || t || '.';
+  end if;
+  insert into watchlist(member_id, ticker, note)
+    values (p_member_id, t, nullif(trim(coalesce(p_note,'')), ''));
+  return 'ok';
+end $$;
+-- One hour to fix a typo; after that the call is on the record.
+create or replace function remove_watch(p_member_id bigint, p_id bigint)
+returns text language plpgsql security definer set search_path=public as $$
+declare a timestamptz;
+begin
+  select added_at into a from watchlist where id = p_id and member_id = p_member_id;
+  if a is null then return 'Not found.'; end if;
+  if now() - a > interval '1 hour' then
+    return 'Picks lock in after an hour - this one is on the record now.';
+  end if;
+  delete from watchlist where id = p_id and member_id = p_member_id;
+  return 'ok';
+end $$;
+create or replace function clear_vote(p_member_id bigint, p_proposal_id bigint) returns void
+language sql security definer set search_path=public as $$
+  delete from votes where member_id=p_member_id and proposal_id=p_proposal_id
+$$;
+alter table watchlist enable row level security;
+grant select on watchlist_public to anon;
+grant execute on function add_watch(bigint,text,text), remove_watch(bigint,bigint), clear_vote(bigint,bigint) to anon;
