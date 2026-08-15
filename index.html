@@ -462,7 +462,7 @@ function renderSlate(){
     const held=p.held?'<span style="font-size:9px;font-weight:800;letter-spacing:.5px;color:#161200;background:var(--grad);border-radius:5px;padding:2px 6px;margin-left:6px;white-space:nowrap">ALREADY HELD</span>':'';
     return '<div style="border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-top:8px">'+
       '<div onclick="toggleSlate('+i+')" style="display:flex;align-items:center;gap:10px;cursor:pointer">'+
-        '<div style="flex:1"><span class="mono" style="font-size:15px;color:var(--gold);font-weight:700">'+p.sym+'</span>'+held+
+        '<div style="flex:1"><a href="'+yUrl(p.sym)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="mono" style="font-size:15px;color:var(--gold);font-weight:700;text-decoration:none;border-bottom:1px dotted rgba(212,175,55,.55)">'+p.sym+'</a>'+held+
         '<div class="note" style="margin-top:2px">'+esc(p.name)+'</div></div>'+
         '<div style="text-align:right"><div class="mono" style="font-size:14px">'+fmt2(p.price*p.sh)+'</div>'+
         '<div class="note">'+p.sh+' sh @ '+fmt2(p.price)+'</div></div>'+
