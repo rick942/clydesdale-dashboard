@@ -593,13 +593,16 @@ function renderMemberUI(){const el=document.getElementById('memberBar');if(el)el
 async function memberLogin(){const code=(document.getElementById('mCode').value||'').trim();const st=document.getElementById('mLoginStatus');if(!code){if(st)st.textContent='Enter your last name.';return;}if(st)st.textContent='Checking…';try{const rows=await sbRpc('member_login',{p_code:code});if(!rows.length){if(st)st.textContent='No match — check spelling.';return;}MEMBER={id:rows[0].id,name:rows[0].name};localStorage.setItem('cly_member',JSON.stringify(MEMBER));renderMemberUI();loadVote();loadPoll();flash('Welcome, '+MEMBER.name.split(' ')[0]+'!');}catch(e){if(st)st.textContent=e.offline?'Sign-in is offline — the club database is unreachable.':('Error: '+e.message);}}
 function memberLogout(){MEMBER=null;MY_VOTES={};localStorage.removeItem('cly_member');renderMemberUI();loadVote();loadPoll();}
 
-let PROPOSAL_IDS={},TALLIES={},MY_VOTES={},VOTE_REASONS=[];
+let PROPOSAL_IDS={},TALLIES={},MY_VOTES={},REASONS={},REASON_OPEN={};
 async function loadVote(){
   try{
     const props=await sbGet('proposals?status=eq.open&select=id,ticker');
     PROPOSAL_IDS={}; props.forEach(p=>{PROPOSAL_IDS[p.ticker]=p.id;});
     const t=await sbGet('vote_tallies?select=proposal_id,choice,votes');
     TALLIES={}; t.forEach(r=>{(TALLIES[r.proposal_id]=TALLIES[r.proposal_id]||{yes:0,no:0})[r.choice]=r.votes;});
+    // vote_reasons is a view over no-votes only and carries no member id, so it is anonymous by construction.
+    const rs=await sbGet('vote_reasons?select=proposal_id,reason');
+    REASONS={}; rs.forEach(r=>{(REASONS[r.proposal_id]=REASONS[r.proposal_id]||[]).push(r.reason);});
     restoreMyVotes();
   }catch(e){ if(!e.offline) console.warn(e); }
   renderVote(); renderSlate();
@@ -623,17 +626,44 @@ function voteControls(sym){
   const bar=tot
     ? '<div style="display:flex;align-items:center;gap:8px;margin-top:6px"><div style="flex:1;background:rgba(255,255,255,.06);border-radius:5px;height:8px;overflow:hidden"><div style="width:'+Math.round(y/tot*100)+'%;height:100%;background:var(--green)"></div></div><div class="note" style="white-space:nowrap">'+y+' yes &middot; '+n+' no</div></div>'
     : '<div class="note" style="margin-top:6px">No votes yet</div>';
+  // Reason box appears once you've voted no; it is optional and can be updated later.
+  const box=(mine==='no'&&REASON_OPEN[pid])
+    ? '<div style="margin-top:8px"><textarea id="rsn'+pid+'" rows="2" placeholder="(optional) why not? shown anonymously" style="width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:8px;font-family:inherit;font-size:13px"></textarea>'+
+      '<div style="display:flex;gap:6px;margin-top:6px"><button class="vote-btn" style="flex:1;padding:6px" onclick="submitReason('+pid+')">Add reason</button>'+
+      '<button class="vote-btn" style="padding:6px 10px" onclick="closeReason('+pid+')">Skip</button></div></div>'
+    : (mine==='no' ? '<div class="note" style="margin-top:6px"><a href="#" onclick="openReason('+pid+');return false" style="color:var(--gold)">Add an anonymous reason</a></div>' : '');
+  const list=(REASONS[pid]&&REASONS[pid].length)
+    ? '<div class="note" style="margin-top:9px">Reasons against (anonymous):</div>'+
+      REASONS[pid].map(r=>'<div style="font-size:12px;color:var(--muted);border-left:2px solid var(--red);padding-left:8px;margin-top:5px">'+esc(r)+'</div>').join('')
+    : '';
   return '<div style="margin-top:9px;display:flex;gap:6px" onclick="event.stopPropagation()">'+
     '<button class="vote-btn'+(mine==='yes'?' sel':'')+'" style="flex:1;padding:7px" onclick="voteOn('+pid+',\'yes\')">&#128077; Yes</button>'+
-    '<button class="vote-btn'+(mine==='no'?' sel':'')+'" style="flex:1;padding:7px" onclick="voteOn('+pid+',\'no\')">&#128078; No</button></div>'+bar;
+    '<button class="vote-btn'+(mine==='no'?' sel':'')+'" style="flex:1;padding:7px" onclick="voteOn('+pid+',\'no\')">&#128078; No</button></div>'+
+    bar+'<div onclick="event.stopPropagation()">'+box+list+'</div>';
+}
+function openReason(pid){REASON_OPEN[pid]=true;renderSlate();const t=document.getElementById('rsn'+pid);if(t)t.focus();}
+function closeReason(pid){REASON_OPEN[pid]=false;renderSlate();}
+function submitReason(pid){
+  if(needLogin())return;
+  const t=document.getElementById('rsn'+pid);
+  const reason=(t&&t.value.trim())||null;
+  if(!reason){closeReason(pid);return;}
+  REASON_OPEN[pid]=false;
+  sendVote(pid,'no',reason,'Reason added — thanks');
 }
 function voteOn(pid,choice){
   if(needLogin())return;
+  const wasNo=MY_VOTES[pid]==='no';
   MY_VOTES[pid]=choice;
   localStorage.setItem('cly_v_'+MEMBER.id+'_'+pid,choice);
+  if(choice==='no'&&!wasNo) REASON_OPEN[pid]=true;   // prompt for a reason the first time
+  if(choice==='yes') REASON_OPEN[pid]=false;
   renderSlate(); renderVote();
-  sbRpc('cast_vote',{p_member_id:MEMBER.id,p_proposal_id:pid,p_choice:choice,p_reason:null})
-    .then(()=>{flash('Vote recorded: '+choice.toUpperCase());loadVote();})
+  sendVote(pid,choice,null,'Vote recorded: '+choice.toUpperCase());
+}
+function sendVote(pid,choice,reason,msg){
+  sbRpc('cast_vote',{p_member_id:MEMBER.id,p_proposal_id:pid,p_choice:choice,p_reason:reason})
+    .then(()=>{flash(msg);loadVote();})
     .catch(()=>flash('Could not save vote'));
 }
 
