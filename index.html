@@ -648,6 +648,7 @@ function clubInit(){renderMemberUI();loadVote();loadPoll();loadWatch();}
    workflow job. Either source can be missing without breaking the other. */
 let WATCH=[],WATCH_PRICES={},WATCH_UPDATED=null;
 async function loadWatch(){
+  renderWatch();   // reflect the current sign-in state now; data catches up below
   try{ WATCH=await sbGet('watchlist_public?select=id,ticker,note,added_at,name&order=added_at.asc'); }
   catch(e){ WATCH=[]; }
   try{
