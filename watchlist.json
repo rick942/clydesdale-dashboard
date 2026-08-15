@@ -1,5 +1,5 @@
 {
- "updated": "2026-08-15T03:40:41Z",
+ "updated": "2026-08-15T04:14:34Z",
  "items": [
   {
    "id": 13,
@@ -10,6 +10,17 @@
    "entryPrice": 225.16,
    "entryAt": "2026-08-15T02:57:09Z",
    "lastPrice": 225.16,
+   "pct": 0.0
+  },
+  {
+   "id": 14,
+   "ticker": "RRX",
+   "name": "Ricky Johnson",
+   "note": "Only US supplier putting actuators in humanoid joints",
+   "addedAt": "2026-08-15T03:49:30.400402+00:00",
+   "entryPrice": 175.49,
+   "entryAt": "2026-08-15T04:14:34Z",
+   "lastPrice": 175.49,
    "pct": 0.0
   }
  ]
