@@ -1,0 +1,40 @@
+name: Update watchlist prices
+
+# Its own workflow, on its own schedule, deliberately separate from the Schwab
+# job. Members add picks at any hour on any day, so this runs all week rather
+# than only during market hours - otherwise a Friday-night pick shows no price
+# until Monday.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '*/15 * * * *'   # every 15 min, every day
+
+# A later run should not fight an earlier one over the same file.
+concurrency:
+  group: watchlist
+  cancel-in-progress: false
+
+jobs:
+  watchlist:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Price the club watchlist
+        run: python3 scripts/fetch_watchlist.py
+      - name: Publish if changed
+        run: |
+          git config user.name "clydesdale-bot"
+          git config user.email "actions@github.com"
+          git add watchlist.json
+          git diff --cached --quiet && exit 0
+          git commit -m "Update watchlist [skip ci]"
+          for i in 1 2 3; do
+            git pull --rebase --autostash origin master && git push && exit 0
+            sleep 5
+          done
+          exit 1

@@ -664,7 +664,7 @@ function watchHeadlineText(){
   if(!WATCH.length){ h.innerHTML='Call a stock and we track it from that day. Paper only &mdash; <b style="color:var(--txt)">no picks yet</b>.'; return; }
   const scored=WATCH.map(w=>WATCH_PRICES[w.id]).filter(p=>p&&p.pct!=null).sort((a,b)=>b.pct-a.pct);
   const n=WATCH.length+' pick'+(WATCH.length===1?'':'s');
-  if(!scored.length){ h.innerHTML=n+' &middot; prices land on the next update'; return; }
+  if(!scored.length){ h.innerHTML=n+' &middot; pricing within ~15 min'; return; }
   const top=scored[0];
   h.innerHTML=n+' &middot; leader <b style="color:var(--gold)">'+esc(top.ticker)+'</b> '+
     '<b style="color:'+(top.pct>=0?'var(--green)':'var(--red)')+'">'+(top.pct>=0?'+':'')+top.pct.toFixed(1)+'%</b> ('+esc((top.name||'').split(' ')[0])+')';
@@ -706,11 +706,11 @@ function renderWatch(){
         (r.w.note?'<div style="font-size:12px;color:var(--muted);border-left:2px solid var(--line);padding-left:8px;margin-top:5px">'+esc(r.w.note)+'</div>':'')+
       '</div>'+
       '<div style="text-align:right"><div class="mono" style="font-size:15px;font-weight:700;color:'+col+'">'+val+'</div>'+
-        (p&&p.lastPrice!=null?'<div class="note">'+fmt2(p.lastPrice)+'</div>':'<div class="note">awaiting price</div>')+'</div></div>';
+        (p&&p.lastPrice!=null?'<div class="note">'+fmt2(p.lastPrice)+'</div>':'<div class="note">pricing\u2026</div>')+'</div></div>';
   }).join('');
   if(foot) foot.innerHTML=WATCH_UPDATED
-    ? 'Prices updated '+new Date(WATCH_UPDATED).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+'. Paper only — nothing here is club money.'
-    : 'Prices fill in on the next update. Paper only — nothing here is club money.';
+    ? 'Prices updated '+new Date(WATCH_UPDATED).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+' &middot; refreshed every 15 min. Paper only — nothing here is club money.'
+    : 'Prices refresh every 15 minutes. Paper only — nothing here is club money.';
 }
 async function addWatch(){
   if(needLogin())return;
@@ -721,7 +721,7 @@ async function addWatch(){
     const msg=await sbRpc('add_watch',{p_member_id:MEMBER.id,p_ticker:ticker,p_note:(n.value||'').trim()||null});
     if(msg!=='ok'){ if(st)st.textContent=msg; return; }
     t.value='';n.value='';if(st)st.textContent='';
-    flash('Added '+ticker.toUpperCase()+' — the clock starts now');
+    flash('Added '+ticker.toUpperCase()+' — price lands within ~15 min');
     loadWatch();
   }catch(e){ if(st)st.textContent=e.offline?'Watchlist is offline.':'Could not add that.'; }
 }
