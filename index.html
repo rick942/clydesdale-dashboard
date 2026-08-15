@@ -170,7 +170,19 @@ footer img{width:30px;opacity:.6;margin-bottom:8px}
 
   <div id="memberBar" style="margin:0 0 12px"><div style="background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 14px"><div class="note" style="margin-bottom:6px">Sign in to vote &amp; RSVP &mdash; just your last name</div><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><input class="m-in" id="mCode" type="text" placeholder="last name" autocomplete="off" style="flex:1;min-width:140px"><button class="vote-btn" onclick="memberLogin()">Sign in</button><span id="mLoginStatus" class="note"></span></div></div></div>
 
-  <div class="card" style="animation-delay:.02s">
+  <div class="card hero" style="animation-delay:.02s">
+    <div class="label">Total Club Value</div>
+    <div class="val" id="totalVal"></div>
+    <div class="day" id="dayChg"></div>
+    <div class="row">
+      <div class="chip"><div class="k">All-Time Gain</div><div class="v pos" id="totalGain"></div></div>
+      <div class="chip"><div class="k">Invested (Cost)</div><div class="v mono" id="costBasis"></div></div>
+      <div class="chip"><div class="k">Cash</div><div class="v mono" id="cash"></div></div>
+    </div>
+    <div class="note" id="mathNote"></div>
+  </div>
+
+  <div class="card" style="animation-delay:.04s">
     <div style="display:flex;gap:20px;align-items:stretch;flex-wrap:wrap">
       <div style="flex:1;min-width:160px">
         <div class="label">Next Meeting</div>
@@ -187,35 +199,31 @@ footer img{width:30px;opacity:.6;margin-bottom:8px}
     </div>
   </div>
 
-  <div class="card hero" style="animation-delay:.04s">
-    <div class="label">Total Club Value</div>
-    <div class="val" id="totalVal"></div>
-    <div class="day" id="dayChg"></div>
-    <div class="row">
-      <div class="chip"><div class="k">All-Time Gain</div><div class="v pos" id="totalGain"></div></div>
-      <div class="chip"><div class="k">Invested (Cost)</div><div class="v mono" id="costBasis"></div></div>
-      <div class="chip"><div class="k">Cash</div><div class="v mono" id="cash"></div></div>
-    </div>
-    <div class="note" id="mathNote"></div>
-  </div>
-
-  <div class="card" style="animation-delay:.08s">
-    <div class="label" style="color:var(--gold)">&#128203; Stock Slate &middot; Up For Vote</div>
-    <div class="note" style="margin-top:6px">Seven names proposed for this cycle. We&rsquo;re voting on all of them now so anything approved but unfunded this month can be picked up later.</div>
-    <div id="slateFunding" style="margin-top:12px"></div>
-    <div id="slateList" style="margin-top:6px"></div>
-    <div style="margin-top:14px;border-top:1px solid var(--line);padding-top:12px">
-      <div class="label" style="margin-bottom:8px">&#128499;&#65039; Club Vote</div>
-      <div id="voteArea"></div>
-      <div id="voteResults" style="margin-top:12px"></div>
-    </div>
-  </div>
-
-  <div class="card" style="animation-delay:.09s">
+  <div class="card" style="animation-delay:.06s">
     <div class="label" style="color:var(--gold)">&#9971; Golf Tournament &middot; When Are You Free?</div>
     <div class="note" style="margin-top:6px">Tap every weekend that works for you &mdash; best dates rise to the top. Not private, so we can see who&rsquo;s in.</div>
     <div id="pollLead" style="margin-top:12px"></div>
     <div id="pollList" style="margin-top:10px;max-height:360px;overflow:auto"></div>
+  </div>
+
+  <div class="card" style="animation-delay:.08s">
+    <div onclick="toggleSlateCard()" style="display:flex;align-items:center;gap:10px;cursor:pointer">
+      <div style="flex:1">
+        <div class="label" style="color:var(--gold)">&#128203; Stock Slate &middot; Up For Vote</div>
+        <div class="note" id="slateHeadline" style="margin-top:4px"></div>
+      </div>
+      <div id="slateCardChev" style="color:var(--gold);font-size:13px">&#9650;</div>
+    </div>
+    <div id="slateBody">
+      <div class="note" style="margin-top:6px">Seven names proposed for this cycle. We&rsquo;re voting on all of them now so anything approved but unfunded this month can be picked up later.</div>
+      <div id="slateFunding" style="margin-top:12px"></div>
+      <div id="slateList" style="margin-top:6px"></div>
+      <div style="margin-top:14px;border-top:1px solid var(--line);padding-top:12px">
+        <div class="label" style="margin-bottom:8px">&#128499;&#65039; Club Vote</div>
+        <div id="voteArea"></div>
+        <div id="voteResults" style="margin-top:12px"></div>
+      </div>
+    </div>
   </div>
 
   <div class="card" style="animation-delay:.10s">
@@ -437,6 +445,13 @@ function renderSlate(){
   if(!list) return;
   const total=PROPOSALS.reduce((s,p)=>s+p.price*p.sh,0),shares=PROPOSALS.reduce((s,p)=>s+p.sh,0);
   const cash=(DATA&&typeof DATA.cash==='number')?DATA.cash:null,short=cash===null?null:total-cash;
+  const head=document.getElementById('slateHeadline');
+  if(head){
+    const ids=Object.values(PROPOSAL_IDS||{}),done=ids.filter(id=>MY_VOTES&&MY_VOTES[id]).length;
+    head.innerHTML=PROPOSALS.length+' names &middot; '+fmt2(total)+
+      ((MEMBER&&ids.length)?' &middot; you&rsquo;ve voted on <b style="color:var(--gold)">'+done+' of '+ids.length+'</b>':'');
+  }
+  applySlateCard(slateCardOpen());
   fund.innerHTML='<div style="display:flex;gap:10px;flex-wrap:wrap">'+
     '<div style="flex:1;min-width:140px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px"><div class="note">Slate total</div><div class="mono" style="font-size:18px">'+fmt2(total)+'</div><div class="note">'+shares+' shares &middot; '+PROPOSALS.length+' names</div></div>'+
     (cash!==null?'<div style="flex:1;min-width:140px;background:var(--panel);border:1px solid '+(short>0?'rgba(233,138,120,.45)':'var(--line)')+';border-radius:10px;padding:10px"><div class="note">Cash on hand</div><div class="mono" style="font-size:18px">'+fmt2(cash)+'</div><div class="note">'+(short>0?'<span style="color:var(--red)">short '+fmt2(short)+'</span>':'covers the full slate')+'</div></div>':'')+
@@ -459,6 +474,17 @@ function renderSlate(){
 }
 function toggleSlate(i){const m=document.getElementById('slateMore'+i),c=document.getElementById('slateChev'+i);
   const on=m.style.display==='none';m.style.display=on?'block':'none';if(c)c.innerHTML=on?'&#9650;':'&#9660;';}
+// Whole-card collapse. The choice sticks, so anyone who folds it away keeps it folded.
+function slateCardOpen(){try{return localStorage.getItem('cly_slate_open')!=='0';}catch(e){return true;}}
+function applySlateCard(open){
+  const b=document.getElementById('slateBody'),c=document.getElementById('slateCardChev');
+  if(!b)return; b.style.display=open?'block':'none'; if(c)c.innerHTML=open?'&#9650;':'&#9660;';
+}
+function toggleSlateCard(){
+  const open=!slateCardOpen();
+  try{localStorage.setItem('cly_slate_open',open?'1':'0');}catch(e){}
+  applySlateCard(open);
+}
 
 function render(){
   document.getElementById('asof').textContent='As of '+DATA.asOf;
