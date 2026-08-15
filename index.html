@@ -152,6 +152,8 @@ footer img{width:30px;opacity:.6;margin-bottom:8px}
     <a class="schwab-btn" href="https://client.schwab.com/Areas/Access/Login" target="_blank" rel="noopener">Log in to Schwab &#8599;</a>
   </header>
 
+  <div id="staleBanner" style="display:none"></div>
+
   <div id="ponyCard">
     
     <div class="pony-inner">
@@ -159,14 +161,14 @@ footer img{width:30px;opacity:.6;margin-bottom:8px}
         <div class="pony-emoji">&#128014;</div>
         <div style="flex:1">
           <div class="label" style="color:var(--gold)">Pony of the Month</div>
-          <div class="gold-text" style="font-family:'Fraunces',serif;font-size:24px;margin-top:2px">Evan Bruegenhemke</div>
-          <div style="color:var(--muted);font-size:13px;margin-top:4px">Read <b style="color:var(--txt)">The Psychology of Money</b> off the club reading list. &#128218;</div>
+          <div class="gold-text" style="font-family:'Fraunces',serif;font-size:24px;margin-top:2px">Mark Steiniger</div>
+          <div style="color:var(--muted);font-size:13px;margin-top:4px">Welcomed his second daughter, <b style="color:var(--txt)">Kennedy</b>. &#128118;</div>
         </div>
       </div>
     </div>
   </div>
 
-  <div id="memberBar" style="margin:0 0 12px"><div style="background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 14px"><div class="note" style="margin-bottom:6px">Sign in to vote &amp; RSVP &mdash; your email + last name</div><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><input class="m-in" id="mEmail" type="email" placeholder="email" autocomplete="email"><input class="m-in" id="mCode" type="text" placeholder="last name" autocomplete="off"><button class="vote-btn" onclick="memberLogin()">Sign in</button><span id="mLoginStatus" class="note"></span></div></div></div>
+  <div id="memberBar" style="margin:0 0 12px"><div style="background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 14px"><div class="note" style="margin-bottom:6px">Sign in to vote &amp; RSVP &mdash; just your last name</div><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><input class="m-in" id="mCode" type="text" placeholder="last name" autocomplete="off" style="flex:1;min-width:140px"><button class="vote-btn" onclick="memberLogin()">Sign in</button><span id="mLoginStatus" class="note"></span></div></div></div>
 
   <div class="card" style="animation-delay:.02s">
     <div style="display:flex;gap:20px;align-items:stretch;flex-wrap:wrap">
@@ -198,17 +200,10 @@ footer img{width:30px;opacity:.6;margin-bottom:8px}
   </div>
 
   <div class="card" style="animation-delay:.08s">
-    <div class="label" style="color:var(--gold)">&#128203; Stock Proposal &middot; Up For Vote</div>
-    <div style="font-family:'Fraunces',serif;font-size:23px;margin-top:4px">EquipmentShare <span style="color:var(--muted);font-size:15px">(NASDAQ: EQPT)</span></div>
-    <div style="color:var(--muted);font-size:12px;margin-top:2px">Proposed by Sean Corrigan</div>
-    <div class="note" style="margin-top:10px;line-height:1.5">Initiate <b style="color:var(--txt)">~100 shares (~$2,500&ndash;$3,500)</b>, about <b style="color:var(--txt)">2&ndash;3%</b> of the club &mdash; diversifying out of heavy mega-cap tech (GOOG, AMZN, ASML, CRWD, MPWR) into <b style="color:var(--txt)">industrials &amp; infrastructure</b>. EquipmentShare rents construction equipment and runs a jobsite-tech platform (&ldquo;T3&rdquo;), HQ&rsquo;d in Columbia, MO.</div>
-    <button class="more-btn" id="propBtn" onclick="toggleProp()">Read the full thesis &#9660;</button>
-    <div id="propMore" style="display:none;margin-top:8px;color:var(--muted);font-size:13px;line-height:1.55">
-      <b style="color:var(--green)">Thesis:</b> Rides U.S. infrastructure spend, manufacturing reshoring, and construction-tech adoption; early growth phase with national-expansion runway.<br><br>
-      <b style="color:var(--green)">Strengths:</b> Rapid revenue growth, market-share gains, the T3 software moat, and real diversification vs. our tech-heavy book.<br><br>
-      <b style="color:var(--red)">Risks:</b> Economic cyclicality, capital-intensive fleet, big competitors (United Rentals, Herc, Sunbelt), and recent-IPO volatility.<br><br>
-      <b style="color:var(--gold)">Strategy:</b> ~100 shares, 3&ndash;5 year hold; watch revenue growth, branch expansion, debt, utilization, and margins.
-    </div>
+    <div class="label" style="color:var(--gold)">&#128203; Stock Slate &middot; Up For Vote</div>
+    <div class="note" style="margin-top:6px">Seven names proposed for this cycle. We&rsquo;re voting on all of them now so anything approved but unfunded this month can be picked up later.</div>
+    <div id="slateFunding" style="margin-top:12px"></div>
+    <div id="slateList" style="margin-top:6px"></div>
     <div style="margin-top:14px;border-top:1px solid var(--line);padding-top:12px">
       <div class="label" style="margin-bottom:8px">&#128499;&#65039; Club Vote</div>
       <div id="voteArea"></div>
@@ -279,7 +274,7 @@ footer img{width:30px;opacity:.6;margin-bottom:8px}
 let DATA = null;
 
 // ====== EDIT THESE: club meeting + next event ======
-const MEETING_AT = "2026-06-17T18:30:00";   // next meeting date & time, 24h (year-mo-dyThh:mm:ss)
+const MEETING_AT = "2026-09-15T20:00:00";   // next meeting date & time, 24h (year-mo-dyThh:mm:ss)
 const NEXT_EVENT = { name:"Golf Tournament", date:"TBD", location:"TBD" };
 // ===================================================
 function renderEvents(){
@@ -289,9 +284,14 @@ function renderEvents(){
   const md=document.getElementById('mtgDate'), mc=document.getElementById('mtgCountdown');
   const t=new Date(MEETING_AT);
   if(isNaN(t.getTime())){ md.textContent='TBD'; mc.textContent=''; return; }
-  md.textContent=t.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})+' \u00b7 '+t.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
   const days=Math.ceil((t.getTime()-Date.now())/86400000);
-  mc.textContent = days>1?(days+' days away') : days===1?'Tomorrow' : days===0?'Today' : 'Completed';
+  if(days<0){ // don't advertise a date that already passed as if it were upcoming
+    md.textContent='To be scheduled';
+    mc.textContent='Last met '+t.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+    return;
+  }
+  md.textContent=t.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})+' \u00b7 '+t.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  mc.textContent = days>1?(days+' days away') : days===1?'Tomorrow' : 'Today';
 }
 
 const TERMS = [
@@ -387,13 +387,86 @@ function ponyConfetti(){
     if(alive&&t<118) requestAnimationFrame(step); else layer.remove();
   })();
 }
-function toggleProp(){const m=document.getElementById('propMore'),b=document.getElementById('propBtn');const open=m.style.display!=='none';m.style.display=open?'none':'block';b.innerHTML=open?'Read the full thesis \u25BC':'Hide thesis \u25B2';}
 function castVote(choice){document.querySelectorAll('.vote-btn').forEach(b=>b.classList.toggle('sel',b.getAttribute('data-choice')===choice));document.getElementById('voteStatus').innerHTML='Your pick is noted \u2014 <b>live voting &amp; results turn on shortly.</b>';}
+// ---- data freshness: the Schwab feed can silently stall, so never imply these are live prices ----
+function asOfDate(){
+  if(!DATA||!DATA.asOf) return null;
+  const t=Date.parse(String(DATA.asOf).replace(/\s*ET\s*$/,''));
+  return isNaN(t)?null:new Date(t);
+}
+function dataAgeDays(){ const d=asOfDate(); return d?(Date.now()-d.getTime())/86400000:null; }
+function isStale(){ const a=dataAgeDays(); return a!==null && a>=1.5; }
+function dayChangeLabel(){
+  if(!isStale()) return 'today';
+  return 'on '+asOfDate().toLocaleDateString('en-US',{month:'short',day:'numeric'});
+}
+function renderFreshness(){
+  const el=document.getElementById('staleBanner'); if(!el) return;
+  if(!isStale()){ el.style.display='none'; return; }
+  el.style.cssText='display:block;background:rgba(233,138,120,.10);border:1px solid rgba(233,138,120,.45);border-radius:12px;padding:11px 14px;margin:0 0 12px';
+  el.innerHTML='<div style="font-size:13px;color:var(--red);font-weight:700">&#9888;&#65039; Holdings are '+Math.round(dataAgeDays())+' days out of date</div>'+
+    '<div class="note" style="margin-top:3px">The Schwab feed last updated <b style="color:var(--txt)">'+DATA.asOf+'</b>. These are not live prices &mdash; the totals and day change below are frozen as of that date.</div>';
+}
+
+// ---- proposed slate: prices are the 8/11 close from the President's email ----
+const PROPOSALS=[
+  {sym:'REMX',name:'VanEck Rare Earth & Strategic Metals ETF',price:76.72,sh:14,by:'Jake Herbst',held:null,
+   what:'An ETF holding miners and processors of rare earth elements and strategic metals — the inputs behind magnets, EV motors and defense hardware.',
+   fit:'Overlaps exposure the club already owns: CRML (308 sh) and MP (10 sh), about $2,795 between them. This deepens that sleeve to roughly $3,870 rather than opening a new one.'},
+  {sym:'PLTR',name:'Palantir Technologies',price:174.94,sh:10,by:'Jake Crowder',held:null,
+   what:'Data-analytics and AI software, sold mainly to government agencies and large enterprises on long-term contracts.',
+   fit:'The largest single line on the slate at $1,749, added to a book already weighted toward software and AI — CRWD (~$7.5k), NVDA (~$2.8k), MSFT (~$2.0k).'},
+  {sym:'MSFT',name:'Microsoft',price:503.81,sh:4,by:'Jake Crowder',held:'5 shares, $1,982.50',
+   what:'Enterprise software, Azure cloud infrastructure and the Office productivity franchise.',
+   fit:'Not a new position — the club already holds 5 shares. These 4 would take it to 9 and roughly double the stake.'},
+  {sym:'UBER',name:'Uber Technologies',price:78.54,sh:20,by:'Jake Crowder',held:'8 shares, $581.60',
+   what:'Rideshare and delivery marketplace, earning a take rate on each trip.',
+   fit:'Not a new position — the club already holds 8 shares. These 20 would take it to 28, about 3.5x the current stake.'},
+  {sym:'TGT',name:'Target',price:152.29,sh:10,by:'Evan Bruegenhemke',held:null,
+   what:'Big-box general-merchandise retailer with a large private-label mix.',
+   fit:'Would be the club’s first dedicated discount-retail name; the closest thing currently held is TJX at 4 shares ($605).'},
+  {sym:'WMT',name:'Walmart',price:113.26,sh:10,by:'Tanner Rodell',held:null,
+   what:'The largest U.S. retailer by revenue, anchored on grocery and increasingly on e-commerce.',
+   fit:'Proposed alongside TGT — approving both adds about $2,656 of big-box retail at once, so it is worth deciding whether the club wants both or one.'},
+  {sym:'SPCX',name:'SpaceX (Space Exploration Technologies)',price:133.29,sh:10,by:'Mark Steiniger',held:null,
+   what:'Launch services and the Starlink satellite-internet network. Listed on Nasdaq in June 2026 — note this ticker belonged to a SPAC ETF until April 2026, which moved to SPCK.',
+   fit:'Newly public with only a couple of months of trading history, so the price record is thin. Comparable in that respect to EQPT, the club’s other recent-IPO holding.'}
+];
+function renderSlate(){
+  const fund=document.getElementById('slateFunding'),list=document.getElementById('slateList');
+  if(!list) return;
+  const total=PROPOSALS.reduce((s,p)=>s+p.price*p.sh,0),shares=PROPOSALS.reduce((s,p)=>s+p.sh,0);
+  const cash=(DATA&&typeof DATA.cash==='number')?DATA.cash:null,short=cash===null?null:total-cash;
+  fund.innerHTML='<div style="display:flex;gap:10px;flex-wrap:wrap">'+
+    '<div style="flex:1;min-width:140px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px"><div class="note">Slate total</div><div class="mono" style="font-size:18px">'+fmt2(total)+'</div><div class="note">'+shares+' shares &middot; '+PROPOSALS.length+' names</div></div>'+
+    (cash!==null?'<div style="flex:1;min-width:140px;background:var(--panel);border:1px solid '+(short>0?'rgba(233,138,120,.45)':'var(--line)')+';border-radius:10px;padding:10px"><div class="note">Cash on hand</div><div class="mono" style="font-size:18px">'+fmt2(cash)+'</div><div class="note">'+(short>0?'<span style="color:var(--red)">short '+fmt2(short)+'</span>':'covers the full slate')+'</div></div>':'')+
+    '</div>'+(short>0?'<div class="note" style="margin-top:8px">Cash won’t cover the whole slate, which is why we’re voting on all seven now and buying what fits.</div>':'');
+  list.innerHTML=PROPOSALS.map((p,i)=>{
+    const held=p.held?'<span style="font-size:9px;font-weight:800;letter-spacing:.5px;color:#161200;background:var(--grad);border-radius:5px;padding:2px 6px;margin-left:6px;white-space:nowrap">ALREADY HELD</span>':'';
+    return '<div style="border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-top:8px">'+
+      '<div onclick="toggleSlate('+i+')" style="display:flex;align-items:center;gap:10px;cursor:pointer">'+
+        '<div style="flex:1"><span class="mono" style="font-size:15px;color:var(--gold);font-weight:700">'+p.sym+'</span>'+held+
+        '<div class="note" style="margin-top:2px">'+esc(p.name)+'</div></div>'+
+        '<div style="text-align:right"><div class="mono" style="font-size:14px">'+fmt2(p.price*p.sh)+'</div>'+
+        '<div class="note">'+p.sh+' sh @ '+fmt2(p.price)+'</div></div>'+
+        '<div id="slateChev'+i+'" style="color:var(--muted);font-size:11px">&#9660;</div></div>'+
+      '<div class="note" style="margin-top:6px">Proposed by <b style="color:var(--txt)">'+esc(p.by)+'</b>'+(p.held?' &middot; currently '+esc(p.held):'')+'</div>'+
+      '<div id="slateMore'+i+'" style="display:none;margin-top:8px;font-size:13px;color:var(--muted);line-height:1.55">'+
+        '<b style="color:var(--txt)">What it is:</b> '+esc(p.what)+'<br><br>'+
+        '<b style="color:var(--gold)">Fit with the club:</b> '+esc(p.fit)+'</div>'+
+      voteControls(p.sym)+'</div>';
+  }).join('');
+}
+function toggleSlate(i){const m=document.getElementById('slateMore'+i),c=document.getElementById('slateChev'+i);
+  const on=m.style.display==='none';m.style.display=on?'block':'none';if(c)c.innerHTML=on?'&#9650;':'&#9660;';}
+
 function render(){
   document.getElementById('asof').textContent='As of '+DATA.asOf;
+  renderFreshness();
+  renderSlate();
   document.getElementById('totalVal').textContent=fmt2(DATA.totalValue);
   const d=document.getElementById('dayChg');
-  d.innerHTML=(DATA.dayChange>=0?'\u25B2 ':'\u25BC ')+fmt2(Math.abs(DATA.dayChange))+'  ('+pct(DATA.dayChangePct)+') today';
+  d.innerHTML=(DATA.dayChange>=0?'\u25B2 ':'\u25BC ')+fmt2(Math.abs(DATA.dayChange))+'  ('+pct(DATA.dayChangePct)+') '+dayChangeLabel();
   d.className='day '+(DATA.dayChange>=0?'pos':'neg');
   document.getElementById('totalGain').textContent=fmt(DATA.totalGain)+' ('+pct1(DATA.totalGainPct)+')';
   document.getElementById('costBasis').textContent=fmt(DATA.costBasis);
@@ -466,45 +539,83 @@ function toggleBooks(){
 const SB_URL='https://nvhsvcesvkudgttmbpvg.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52aHN2Y2Vzdmt1ZGd0dG1icHZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0OTgyMjgsImV4cCI6MjA5NjA3NDIyOH0.fe6ADWAmYWJcHWB8cGU5Zz31HJs-37lIQpK63j_453U';
 const SB_H={'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY};
-async function sbRpc(fn,args){const r=await fetch(SB_URL+'/rest/v1/rpc/'+fn,{method:'POST',headers:{...SB_H,'Content-Type':'application/json'},body:JSON.stringify(args)});if(!r.ok)throw new Error((await r.text()).slice(0,140));const _t=await r.text();return _t?JSON.parse(_t):null;}
-async function sbGet(path){const r=await fetch(SB_URL+'/rest/v1/'+path,{headers:SB_H});if(!r.ok)throw new Error((await r.text()).slice(0,140));return r.json();}
+let BACKEND_DOWN=false;
+// A dead backend must not look like "no votes yet" — tag transport failures so the UI can say so.
+async function sbFetch(url,opts){
+  try{ const r=await fetch(url,opts); BACKEND_DOWN=false; return r; }
+  catch(e){ BACKEND_DOWN=true; const err=new Error('Club database unreachable'); err.offline=true; throw err; }
+}
+function offlineNotice(what){
+  return '<div style="background:rgba(212,175,55,.05);border:1px dashed var(--line);border-radius:10px;padding:12px;text-align:center">'+
+    '<div style="font-size:13px;color:var(--gold);font-weight:700">'+what+' is temporarily offline</div>'+
+    '<div class="note" style="margin-top:3px">The club database can’t be reached right now, so this can’t load. Everything else on the dashboard still works.</div></div>';
+}
+async function sbRpc(fn,args){const r=await sbFetch(SB_URL+'/rest/v1/rpc/'+fn,{method:'POST',headers:{...SB_H,'Content-Type':'application/json'},body:JSON.stringify(args)});if(!r.ok)throw new Error((await r.text()).slice(0,140));const _t=await r.text();return _t?JSON.parse(_t):null;}
+async function sbGet(path){const r=await sbFetch(SB_URL+'/rest/v1/'+path,{headers:SB_H});if(!r.ok)throw new Error((await r.text()).slice(0,140));return r.json();}
 function esc(x){return (x||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 function flash(m){let t=document.getElementById('clyToast');if(!t){t=document.createElement('div');t.id='clyToast';t.style.cssText='position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#1a1407;color:var(--gold);border:1px solid var(--gold);border-radius:10px;padding:10px 16px;font-size:13px;z-index:99;box-shadow:0 6px 20px rgba(0,0,0,.45);transition:opacity .3s';document.body.appendChild(t);}t.textContent=m;t.style.opacity='1';clearTimeout(t._tm);t._tm=setTimeout(()=>{t.style.opacity='0';},2400);}
 
 let MEMBER=null; try{MEMBER=JSON.parse(localStorage.getItem('cly_member')||'null');}catch(e){}
-let MY_VOTE=null;
-function restoreMyVote(){MY_VOTE=MEMBER?(localStorage.getItem('cly_vote_'+MEMBER.id)||null):null;}
-function clubInit(){restoreMyVote();renderMemberUI();loadVote();loadPoll();}
+function clubInit(){renderMemberUI();loadVote();loadPoll();}
 function needLogin(){if(!MEMBER){const b=document.getElementById('memberBar');if(b)b.scrollIntoView({block:'center'});flash('Sign in at the top first.');return true;}return false;}
 
 function authHTML(){
   if(MEMBER) return '<div style="background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="font-size:14px">&#128075; Welcome, <b class="gold-text">'+esc(MEMBER.name)+'</b></span><a href="#" onclick="memberLogout();return false" class="note" style="margin-left:auto;color:var(--muted)">sign out</a></div>';
-  return '<div style="background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 14px"><div class="note" style="margin-bottom:6px">Sign in to vote &amp; RSVP &mdash; your email + last name</div><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><input class="m-in" id="mEmail" type="email" placeholder="email" autocomplete="email"><input class="m-in" id="mCode" type="text" placeholder="last name" autocomplete="off"><button class="vote-btn" onclick="memberLogin()">Sign in</button><span id="mLoginStatus" class="note"></span></div></div>';
+  return '<div style="background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 14px"><div class="note" style="margin-bottom:6px">Sign in to vote &amp; RSVP &mdash; just your last name</div><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><input class="m-in" id="mCode" type="text" placeholder="last name" autocomplete="off" style="flex:1;min-width:140px"><button class="vote-btn" onclick="memberLogin()">Sign in</button><span id="mLoginStatus" class="note"></span></div></div>';
 }
 function renderMemberUI(){const el=document.getElementById('memberBar');if(el)el.innerHTML=authHTML();}
-async function memberLogin(){const email=(document.getElementById('mEmail').value||'').trim();const code=(document.getElementById('mCode').value||'').trim();const st=document.getElementById('mLoginStatus');if(!email||!code){if(st)st.textContent='Enter email + last name.';return;}if(st)st.textContent='Checking…';try{const rows=await sbRpc('member_login',{p_email:email,p_code:code});if(!rows.length){if(st)st.textContent='No match — check spelling.';return;}MEMBER={id:rows[0].id,name:rows[0].name,email:email};localStorage.setItem('cly_member',JSON.stringify(MEMBER));restoreMyVote();renderMemberUI();loadVote();loadPoll();flash('Welcome, '+MEMBER.name.split(' ')[0]+'!');}catch(e){if(st)st.textContent='Error: '+e.message;}}
-function memberLogout(){MEMBER=null;MY_VOTE=null;localStorage.removeItem('cly_member');renderMemberUI();loadVote();loadPoll();}
+async function memberLogin(){const code=(document.getElementById('mCode').value||'').trim();const st=document.getElementById('mLoginStatus');if(!code){if(st)st.textContent='Enter your last name.';return;}if(st)st.textContent='Checking…';try{const rows=await sbRpc('member_login',{p_code:code});if(!rows.length){if(st)st.textContent='No match — check spelling.';return;}MEMBER={id:rows[0].id,name:rows[0].name};localStorage.setItem('cly_member',JSON.stringify(MEMBER));renderMemberUI();loadVote();loadPoll();flash('Welcome, '+MEMBER.name.split(' ')[0]+'!');}catch(e){if(st)st.textContent=e.offline?'Sign-in is offline — the club database is unreachable.':('Error: '+e.message);}}
+function memberLogout(){MEMBER=null;MY_VOTES={};localStorage.removeItem('cly_member');renderMemberUI();loadVote();loadPoll();}
 
-let VOTE_TALLY=[],VOTE_REASONS=[];
-async function loadVote(){try{VOTE_TALLY=await sbGet('vote_tallies?proposal_id=eq.1&select=choice,votes');VOTE_REASONS=await sbGet('vote_reasons?proposal_id=eq.1&select=reason');}catch(e){VOTE_TALLY=[];VOTE_REASONS=[];}renderVote();}
-function vc(c){const r=VOTE_TALLY.find(x=>x.choice===c);return r?r.votes:0;}
-function vbar(label,n,pct,color){return '<div style="display:flex;align-items:center;gap:8px;margin-top:5px"><div style="width:30px;font-size:12px;color:var(--muted)">'+label+'</div><div style="flex:1;background:rgba(255,255,255,.06);border-radius:6px;height:14px;overflow:hidden"><div style="width:'+pct+'%;height:100%;background:'+color+'"></div></div><div style="width:64px;text-align:right;font-size:12px">'+n+' ('+pct+'%)</div></div>';}
-function renderVote(){
-  const area=document.getElementById('voteArea');if(!area)return;
-  const yes=vc('yes'),no=vc('no'),tot=yes+no,pct=v=>tot?Math.round(v/tot*100):0;
-  area.innerHTML='<div style="display:flex;gap:8px"><button class="vote-btn '+(MY_VOTE==='yes'?'sel':'')+'" onclick="voteYes()">&#128077; Yes</button><button class="vote-btn '+(MY_VOTE==='no'?'sel':'')+'" onclick="voteNoStart()">&#128078; No</button></div><div id="noReasonWrap" style="display:'+(MY_VOTE==='no'?'block':'none')+';margin-top:8px"><textarea id="noReason" placeholder="(optional) why not? shown anonymously" rows="2" style="width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:8px;font-family:inherit;font-size:13px"></textarea><button class="vote-btn" style="margin-top:6px" onclick="voteNoSubmit()">Submit No vote</button></div>';
-  const res=document.getElementById('voteResults');
-  res.innerHTML='<div class="note" style="margin-bottom:4px">'+tot+' vote'+(tot===1?'':'s')+' so far'+(MY_VOTE?' &middot; you voted <b style="color:var(--gold)">'+MY_VOTE.toUpperCase()+'</b>':'')+'</div>'+vbar('Yes',yes,pct(yes),'var(--green)')+vbar('No',no,pct(no),'var(--red)')+(VOTE_REASONS.length?'<div class="note" style="margin-top:10px">Reasons against (anonymous):</div>'+VOTE_REASONS.map(r=>'<div style="font-size:12px;color:var(--muted);border-left:2px solid var(--red);padding-left:8px;margin-top:5px">'+esc(r.reason)+'</div>').join(''):'');
+let PROPOSAL_IDS={},TALLIES={},MY_VOTES={},VOTE_REASONS=[];
+async function loadVote(){
+  try{
+    const props=await sbGet('proposals?status=eq.open&select=id,ticker');
+    PROPOSAL_IDS={}; props.forEach(p=>{PROPOSAL_IDS[p.ticker]=p.id;});
+    const t=await sbGet('vote_tallies?select=proposal_id,choice,votes');
+    TALLIES={}; t.forEach(r=>{(TALLIES[r.proposal_id]=TALLIES[r.proposal_id]||{yes:0,no:0})[r.choice]=r.votes;});
+    restoreMyVotes();
+  }catch(e){ if(!e.offline) console.warn(e); }
+  renderVote(); renderSlate();
 }
-function voteYes(){if(needLogin())return;doVote('yes',null);}
-function voteNoStart(){if(needLogin())return;const w=document.getElementById('noReasonWrap');w.style.display='block';}
-function voteNoSubmit(){if(needLogin())return;const t=document.getElementById('noReason');doVote('no',(t&&t.value.trim())||null);}
-async function doVote(choice,reason){try{await sbRpc('cast_vote',{p_member_id:MEMBER.id,p_proposal_id:1,p_choice:choice,p_reason:reason});MY_VOTE=choice;localStorage.setItem('cly_vote_'+MEMBER.id,choice);flash('Vote recorded: '+choice.toUpperCase());loadVote();}catch(e){flash('Could not save vote');}}
+function restoreMyVotes(){MY_VOTES={};if(!MEMBER)return;Object.values(PROPOSAL_IDS).forEach(pid=>{const v=localStorage.getItem('cly_v_'+MEMBER.id+'_'+pid);if(v)MY_VOTES[pid]=v;});}
+// Vote controls live on each slate row; this panel is just status for the whole slate.
+function renderVote(){
+  const area=document.getElementById('voteArea'),res=document.getElementById('voteResults');
+  if(!area)return;
+  if(BACKEND_DOWN){area.innerHTML=offlineNotice('Voting');if(res)res.innerHTML='';return;}
+  const ids=Object.values(PROPOSAL_IDS),done=ids.filter(id=>MY_VOTES[id]).length;
+  area.innerHTML='<div class="note">'+(MEMBER
+    ? 'Signed in as <b class="gold-text">'+esc(MEMBER.name)+'</b> &mdash; tap Yes or No on each name above. You&rsquo;ve voted on <b style="color:var(--txt)">'+done+' of '+ids.length+'</b>.'
+    : 'Sign in above with your last name to vote on each name.')+'</div>';
+  if(res)res.innerHTML='';
+}
+function voteControls(sym){
+  const pid=PROPOSAL_IDS[sym];
+  if(BACKEND_DOWN||!pid)return '';
+  const t=TALLIES[pid]||{},y=t.yes||0,n=t.no||0,tot=y+n,mine=MY_VOTES[pid]||null;
+  const bar=tot
+    ? '<div style="display:flex;align-items:center;gap:8px;margin-top:6px"><div style="flex:1;background:rgba(255,255,255,.06);border-radius:5px;height:8px;overflow:hidden"><div style="width:'+Math.round(y/tot*100)+'%;height:100%;background:var(--green)"></div></div><div class="note" style="white-space:nowrap">'+y+' yes &middot; '+n+' no</div></div>'
+    : '<div class="note" style="margin-top:6px">No votes yet</div>';
+  return '<div style="margin-top:9px;display:flex;gap:6px" onclick="event.stopPropagation()">'+
+    '<button class="vote-btn'+(mine==='yes'?' sel':'')+'" style="flex:1;padding:7px" onclick="voteOn('+pid+',\'yes\')">&#128077; Yes</button>'+
+    '<button class="vote-btn'+(mine==='no'?' sel':'')+'" style="flex:1;padding:7px" onclick="voteOn('+pid+',\'no\')">&#128078; No</button></div>'+bar;
+}
+function voteOn(pid,choice){
+  if(needLogin())return;
+  MY_VOTES[pid]=choice;
+  localStorage.setItem('cly_v_'+MEMBER.id+'_'+pid,choice);
+  renderSlate(); renderVote();
+  sbRpc('cast_vote',{p_member_id:MEMBER.id,p_proposal_id:pid,p_choice:choice,p_reason:null})
+    .then(()=>{flash('Vote recorded: '+choice.toUpperCase());loadVote();})
+    .catch(()=>flash('Could not save vote'));
+}
 
 let POLL=null,POLL_OPTS=[],POLL_CNT={},POLL_DETAIL=[],MY_PICKS=new Set();
 async function loadPoll(){try{const ps=await sbGet('polls?select=id,question&kind=eq.multi&limit=1');if(!ps.length)return;POLL=ps[0];POLL_OPTS=await sbGet('poll_options?select=id,label,sort&poll_id=eq.'+POLL.id+'&order=sort.asc');POLL_DETAIL=await sbGet('poll_detail?select=option_id,name&poll_id=eq.'+POLL.id);POLL_CNT={};POLL_DETAIL.forEach(d=>{POLL_CNT[d.option_id]=(POLL_CNT[d.option_id]||0)+1;});MY_PICKS=new Set(MEMBER?POLL_DETAIL.filter(d=>d.name===MEMBER.name).map(d=>d.option_id):[]);}catch(e){console.warn(e);}renderPoll();}
 function renderPoll(){
   const lead=document.getElementById('pollLead'),list=document.getElementById('pollList');if(!list)return;
+  if(BACKEND_DOWN){ if(lead)lead.innerHTML=offlineNotice('The golf poll'); list.innerHTML=''; return; }
   const ranked=POLL_OPTS.map(o=>({o,n:POLL_CNT[o.id]||0})).sort((a,b)=>b.n-a.n||a.o.sort-b.o.sort);
   const top=ranked[0],sec=ranked[1];
   lead.innerHTML=(top&&top.n>0)?'<div style="display:flex;gap:10px;flex-wrap:wrap"><div style="flex:1;min-width:150px;background:var(--panel);border:1px solid rgba(212,175,55,.55);border-radius:10px;padding:10px"><div class="note">&#127942; Leading date</div><div style="font-family:Fraunces,serif;font-size:18px">'+top.o.label+'</div><div class="note">'+top.n+' free</div></div>'+((sec&&sec.n>0)?'<div style="flex:1;min-width:150px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px"><div class="note">Runner-up</div><div style="font-family:Fraunces,serif;font-size:18px">'+sec.o.label+'</div><div class="note">'+sec.n+' free</div></div>':'')+'</div>':'<div class="note">No picks yet — be the first to mark your weekends.</div>';
