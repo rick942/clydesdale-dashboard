@@ -593,7 +593,7 @@ function renderMemberUI(){const el=document.getElementById('memberBar');if(el)el
 async function memberLogin(){const code=(document.getElementById('mCode').value||'').trim();const st=document.getElementById('mLoginStatus');if(!code){if(st)st.textContent='Enter your last name.';return;}if(st)st.textContent='Checking…';try{const rows=await sbRpc('member_login',{p_code:code});if(!rows.length){if(st)st.textContent='No match — check spelling.';return;}MEMBER={id:rows[0].id,name:rows[0].name};localStorage.setItem('cly_member',JSON.stringify(MEMBER));renderMemberUI();loadVote();loadPoll();flash('Welcome, '+MEMBER.name.split(' ')[0]+'!');}catch(e){if(st)st.textContent=e.offline?'Sign-in is offline — the club database is unreachable.':('Error: '+e.message);}}
 function memberLogout(){MEMBER=null;MY_VOTES={};localStorage.removeItem('cly_member');renderMemberUI();loadVote();loadPoll();}
 
-let PROPOSAL_IDS={},TALLIES={},MY_VOTES={},REASONS={},REASON_OPEN={};
+let PROPOSAL_IDS={},TALLIES={},MY_VOTES={},REASONS={},REASON_OPEN={},MEMBER_COUNT=0;
 async function loadVote(){
   try{
     const props=await sbGet('proposals?status=eq.open&select=id,ticker');
@@ -603,6 +603,7 @@ async function loadVote(){
     // vote_reasons is a view over no-votes only and carries no member id, so it is anonymous by construction.
     const rs=await sbGet('vote_reasons?select=proposal_id,reason');
     REASONS={}; rs.forEach(r=>{(REASONS[r.proposal_id]=REASONS[r.proposal_id]||[]).push(r.reason);});
+    MEMBER_COUNT=(await sbGet('member_directory?select=id')).length;
     restoreMyVotes();
   }catch(e){ if(!e.offline) console.warn(e); }
   renderVote(); renderSlate();
@@ -615,7 +616,7 @@ function renderVote(){
   if(BACKEND_DOWN){area.innerHTML=offlineNotice('Voting');if(res)res.innerHTML='';return;}
   const ids=Object.values(PROPOSAL_IDS),done=ids.filter(id=>MY_VOTES[id]).length;
   area.innerHTML='<div class="note">'+(MEMBER
-    ? 'Signed in as <b class="gold-text">'+esc(MEMBER.name)+'</b> &mdash; tap Yes or No on each name above. You&rsquo;ve voted on <b style="color:var(--txt)">'+done+' of '+ids.length+'</b>.'
+    ? 'Signed in as <b class="gold-text">'+esc(MEMBER.name)+'</b> &mdash; tap Yes or No on each name above, or tap your choice again to withdraw it. You&rsquo;ve voted on <b style="color:var(--txt)">'+done+' of '+ids.length+'</b>.'
     : 'Sign in above with your last name to vote on each name.')+'</div>';
   if(res)res.innerHTML='';
 }
@@ -623,8 +624,9 @@ function voteControls(sym){
   const pid=PROPOSAL_IDS[sym];
   if(BACKEND_DOWN||!pid)return '';
   const t=TALLIES[pid]||{},y=t.yes||0,n=t.no||0,tot=y+n,mine=MY_VOTES[pid]||null;
+  const turnout=MEMBER_COUNT?'<div class="note" style="margin-top:3px">'+tot+' of '+MEMBER_COUNT+' members have voted</div>':'';
   const bar=tot
-    ? '<div style="display:flex;align-items:center;gap:8px;margin-top:6px"><div style="flex:1;background:rgba(255,255,255,.06);border-radius:5px;height:8px;overflow:hidden"><div style="width:'+Math.round(y/tot*100)+'%;height:100%;background:var(--green)"></div></div><div class="note" style="white-space:nowrap">'+y+' yes &middot; '+n+' no</div></div>'
+    ? '<div style="display:flex;align-items:center;gap:8px;margin-top:6px"><div style="flex:1;background:rgba(255,255,255,.06);border-radius:5px;height:8px;overflow:hidden"><div style="width:'+Math.round(y/tot*100)+'%;height:100%;background:var(--green)"></div></div><div class="note" style="white-space:nowrap">'+y+' yes &middot; '+n+' no</div></div>'+turnout
     : '<div class="note" style="margin-top:6px">No votes yet</div>';
   // Reason box appears once you've voted no; it is optional and can be updated later.
   const box=(mine==='no'&&REASON_OPEN[pid])
@@ -651,20 +653,31 @@ function submitReason(pid){
   REASON_OPEN[pid]=false;
   sendVote(pid,'no',reason,'Reason added — thanks');
 }
+function setMyVote(pid,v){
+  if(v){MY_VOTES[pid]=v;localStorage.setItem('cly_v_'+MEMBER.id+'_'+pid,v);}
+  else{delete MY_VOTES[pid];localStorage.removeItem('cly_v_'+MEMBER.id+'_'+pid);}
+}
+// Tapping your current choice again withdraws the vote, so nobody is stuck at yes-or-no.
 function voteOn(pid,choice){
   if(needLogin())return;
-  const wasNo=MY_VOTES[pid]==='no';
-  MY_VOTES[pid]=choice;
-  localStorage.setItem('cly_v_'+MEMBER.id+'_'+pid,choice);
-  if(choice==='no'&&!wasNo) REASON_OPEN[pid]=true;   // prompt for a reason the first time
-  if(choice==='yes') REASON_OPEN[pid]=false;
+  const prev=MY_VOTES[pid]||null, retract=(prev===choice);
+  setMyVote(pid,retract?null:choice);
+  REASON_OPEN[pid]=(!retract&&choice==='no'&&prev!=='no');
   renderSlate(); renderVote();
-  sendVote(pid,choice,null,'Vote recorded: '+choice.toUpperCase());
+  const call=retract
+    ? sbRpc('clear_vote',{p_member_id:MEMBER.id,p_proposal_id:pid})
+    : sbRpc('cast_vote',{p_member_id:MEMBER.id,p_proposal_id:pid,p_choice:choice,p_reason:null});
+  call.then(()=>{flash(retract?'Vote withdrawn':'Vote recorded: '+choice.toUpperCase());loadVote();})
+      .catch(()=>{  // never leave the page claiming a vote the database refused
+        setMyVote(pid,prev); REASON_OPEN[pid]=false;
+        renderSlate(); renderVote();
+        flash('Could not save — your vote was NOT recorded');
+      });
 }
 function sendVote(pid,choice,reason,msg){
   sbRpc('cast_vote',{p_member_id:MEMBER.id,p_proposal_id:pid,p_choice:choice,p_reason:reason})
     .then(()=>{flash(msg);loadVote();})
-    .catch(()=>flash('Could not save vote'));
+    .catch(()=>flash('Could not save — your reason was NOT recorded'));
 }
 
 let POLL=null,POLL_OPTS=[],POLL_CNT={},POLL_DETAIL=[],MY_PICKS=new Set();
