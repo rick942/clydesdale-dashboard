@@ -215,7 +215,7 @@ footer img{width:30px;opacity:.6;margin-bottom:8px}
       <div id="slateCardChev" style="color:var(--gold);font-size:13px">&#9650;</div>
     </div>
     <div id="slateBody">
-      <div class="note" style="margin-top:6px">Seven names proposed for this cycle. We&rsquo;re voting on all of them now so anything approved but unfunded this month can be picked up later.</div>
+      <div class="note" style="margin-top:6px">Seven names proposed for this cycle. We&rsquo;re voting on all of them now so anything approved but unfunded this month can be picked up later. <b style="color:var(--txt)">A name needs 10 members to vote (quorum), then two-thirds of those votes to be yes.</b></div>
       <div id="slateFunding" style="margin-top:12px"></div>
       <div id="slateList" style="margin-top:6px"></div>
       <div style="margin-top:14px;border-top:1px solid var(--line);padding-top:12px">
@@ -448,7 +448,9 @@ function renderSlate(){
   const head=document.getElementById('slateHeadline');
   if(head){
     const ids=Object.values(PROPOSAL_IDS||{}),done=ids.filter(id=>MY_VOTES&&MY_VOTES[id]).length;
+    const passing=ids.filter(id=>voteState(id).passing).length;
     head.innerHTML=PROPOSALS.length+' names &middot; '+fmt2(total)+
+      (ids.length?' &middot; <b style="color:'+(passing?'var(--green)':'var(--muted)')+'">'+passing+' passing</b>':'')+
       ((MEMBER&&ids.length)?' &middot; you&rsquo;ve voted on <b style="color:var(--gold)">'+done+' of '+ids.length+'</b>':'');
   }
   applySlateCard(slateCardOpen());
@@ -465,12 +467,45 @@ function renderSlate(){
         '<div style="text-align:right"><div class="mono" style="font-size:14px">'+fmt2(p.price*p.sh)+'</div>'+
         '<div class="note">'+p.sh+' sh @ '+fmt2(p.price)+'</div></div>'+
         '<div id="slateChev'+i+'" style="color:var(--muted);font-size:11px">&#9660;</div></div>'+
+      passBar(PROPOSAL_IDS[p.sym])+
       '<div class="note" style="margin-top:6px">Proposed by <b style="color:var(--txt)">'+esc(p.by)+'</b>'+(p.held?' &middot; currently '+esc(p.held):'')+'</div>'+
       '<div id="slateMore'+i+'" style="display:none;margin-top:8px;font-size:13px;color:var(--muted);line-height:1.55">'+
         '<b style="color:var(--txt)">What it is:</b> '+esc(p.what)+'<br><br>'+
         '<b style="color:var(--gold)">Fit with the club:</b> '+esc(p.fit)+'</div>'+
       voteControls(p.sym)+'</div>';
   }).join('');
+}
+/* ===== Club voting rule =====
+   QUORUM votes must be cast before a result counts, then PASS_RATIO of the votes
+   cast must be yes. Change these two numbers and every bar and count follows. */
+const QUORUM=10, PASS_RATIO=2/3;
+function votesNeeded(tot){return Math.ceil(tot*PASS_RATIO);}
+function voteState(pid){
+  const t=TALLIES[pid]||{},y=t.yes||0,n=t.no||0,tot=y+n;
+  const quorum=tot>=QUORUM, need=votesNeeded(tot);
+  return {y:y,n:n,tot:tot,quorum:quorum,need:need,passing:quorum&&y>=need};
+}
+function passBar(pid){
+  if(BACKEND_DOWN||!pid) return '';
+  const s=voteState(pid);
+  const track='position:relative;height:10px;border-radius:6px;background:rgba(255,255,255,.07);overflow:hidden';
+  if(!s.quorum){   // not enough of the club has weighed in for the result to mean anything yet
+    const pct=Math.round(s.tot/QUORUM*100);
+    const left=QUORUM-s.tot;
+    return '<div style="margin-top:8px"><div style="'+track+'"><div style="width:'+pct+'%;height:100%;background:var(--grad)"></div></div>'+
+      '<div class="note" style="margin-top:4px">'+
+      (s.tot?s.y+' yes &middot; '+s.n+' no &middot; <b style="color:var(--txt)">'+left+' more vote'+(left===1?'':'s')+'</b> to reach quorum ('+QUORUM+')'
+            :'No votes yet &middot; '+QUORUM+' needed for quorum')+'</div></div>';
+  }
+  const pctYes=Math.round(s.y/s.tot*100), col=s.passing?'var(--green)':'var(--red)';
+  const short=s.need-s.y;
+  return '<div style="margin-top:8px"><div style="'+track+'">'+
+    '<div style="width:'+pctYes+'%;height:100%;background:'+col+';transition:width .35s ease"></div>'+
+    '<div title="two-thirds" style="position:absolute;left:66.6%;top:-2px;width:2px;height:14px;background:var(--gold-lt)"></div></div>'+
+    '<div style="margin-top:4px;font-size:11px;font-weight:800;letter-spacing:.6px;color:'+col+'">'+
+      (s.passing?'&#10003; PASSING':'NOT PASSING')+
+      '<span class="note" style="font-weight:400;letter-spacing:0"> &middot; '+s.y+' of '+s.tot+' yes ('+pctYes+'%) &middot; '+
+      (s.passing?'needs '+s.need:'needs '+s.need+', short '+short)+'</span></div></div>';
 }
 function toggleSlate(i){const m=document.getElementById('slateMore'+i),c=document.getElementById('slateChev'+i);
   const on=m.style.display==='none';m.style.display=on?'block':'none';if(c)c.innerHTML=on?'&#9650;':'&#9660;';}
@@ -623,11 +658,8 @@ function renderVote(){
 function voteControls(sym){
   const pid=PROPOSAL_IDS[sym];
   if(BACKEND_DOWN||!pid)return '';
-  const t=TALLIES[pid]||{},y=t.yes||0,n=t.no||0,tot=y+n,mine=MY_VOTES[pid]||null;
-  const turnout=MEMBER_COUNT?'<div class="note" style="margin-top:3px">'+tot+' of '+MEMBER_COUNT+' members have voted</div>':'';
-  const bar=tot
-    ? '<div style="display:flex;align-items:center;gap:8px;margin-top:6px"><div style="flex:1;background:rgba(255,255,255,.06);border-radius:5px;height:8px;overflow:hidden"><div style="width:'+Math.round(y/tot*100)+'%;height:100%;background:var(--green)"></div></div><div class="note" style="white-space:nowrap">'+y+' yes &middot; '+n+' no</div></div>'+turnout
-    : '<div class="note" style="margin-top:6px">No votes yet</div>';
+  const mine=MY_VOTES[pid]||null;
+  const bar='';   // the tally now lives in passBar() above the row, so it isn't repeated here
   // Reason box appears once you've voted no; it is optional and can be updated later.
   const box=(mine==='no'&&REASON_OPEN[pid])
     ? '<div style="margin-top:8px"><textarea id="rsn'+pid+'" rows="2" placeholder="(optional) why not? shown anonymously" style="width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:8px;font-family:inherit;font-size:13px"></textarea>'+
