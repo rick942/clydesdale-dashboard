@@ -1,16 +1,4 @@
 {
- "updated": "2026-08-15T02:51:21Z",
- "items": [
-  {
-   "id": 10,
-   "ticker": "ASML",
-   "name": "Ricky Johnson",
-   "note": "end-to-end timing check",
-   "addedAt": "2026-08-15T02:50:49.938271+00:00",
-   "entryPrice": 1844.08,
-   "entryAt": "2026-08-15T02:51:21Z",
-   "lastPrice": 1844.08,
-   "pct": 0.0
-  }
- ]
+ "updated": "2026-08-15T02:52:29Z",
+ "items": []
 }
