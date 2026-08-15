@@ -51,12 +51,10 @@ create or replace view watchlist_public as
   from watchlist w join members m on m.id = w.member_id;
 create or replace function add_watch(p_member_id bigint, p_ticker text, p_note text)
 returns text language plpgsql security definer set search_path=public as $$
-declare t text; c int;
+declare t text;
 begin
   t := upper(regexp_replace(coalesce(p_ticker,''), '[^A-Za-z0-9.-]', '', 'g'));
   if t = '' or length(t) > 8 then return 'That does not look like a ticker.'; end if;
-  select count(*) into c from watchlist where member_id = p_member_id;
-  if c >= 3 then return 'You already have 3 picks - remove one first.'; end if;
   if exists (select 1 from watchlist where member_id = p_member_id and ticker = t) then
     return 'You already picked ' || t || '.';
   end if;
@@ -64,17 +62,12 @@ begin
     values (p_member_id, t, nullif(trim(coalesce(p_note,'')), ''));
   return 'ok';
 end $$;
--- One hour to fix a typo; after that the call is on the record.
+-- Picks can be pulled at any time; no cap on how many you hold.
 create or replace function remove_watch(p_member_id bigint, p_id bigint)
 returns text language plpgsql security definer set search_path=public as $$
-declare a timestamptz;
 begin
-  select added_at into a from watchlist where id = p_id and member_id = p_member_id;
-  if a is null then return 'Not found.'; end if;
-  if now() - a > interval '1 hour' then
-    return 'Picks lock in after an hour - this one is on the record now.';
-  end if;
   delete from watchlist where id = p_id and member_id = p_member_id;
+  if not found then return 'Not found.'; end if;
   return 'ok';
 end $$;
 create or replace function clear_vote(p_member_id bigint, p_proposal_id bigint) returns void

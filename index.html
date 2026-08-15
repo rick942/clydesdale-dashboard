@@ -169,6 +169,22 @@ footer img{width:30px;opacity:.6;margin-bottom:8px}
   </div>
 
   <div id="memberBar" style="margin:0 0 12px"><div style="background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 14px"><div class="note" style="margin-bottom:6px">Sign in to vote &amp; RSVP &mdash; just your last name</div><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><input class="m-in" id="mCode" type="text" placeholder="last name" autocomplete="off" style="flex:1;min-width:140px"><button class="vote-btn" onclick="memberLogin()">Sign in</button><span id="mLoginStatus" class="note"></span></div></div></div>
+  <div class="card" style="animation-delay:.03s">
+    <div onclick="togglePanel('watch','watchBody','watchChev',false)" style="display:flex;align-items:center;gap:10px;cursor:pointer">
+      <div style="flex:1">
+        <div class="label" style="color:var(--gold)">&#128200; The Barn &middot; Member Watchlist
+          <span style="font-size:9px;font-weight:800;letter-spacing:.6px;color:#161200;background:var(--grad);border-radius:5px;padding:2px 6px;margin-left:6px;vertical-align:1px">NEW</span></div>
+        <div class="note" id="watchHeadline" style="margin-top:4px">Call a stock and we track it from that day. Paper only.</div>
+      </div>
+      <div id="watchChev" style="color:var(--gold);font-size:13px">&#9660;</div>
+    </div>
+    <div id="watchBody" style="display:none">
+      <div id="watchAdd" style="margin-top:12px"></div>
+      <div id="watchList" style="margin-top:10px"></div>
+      <div class="note" id="watchFoot" style="margin-top:10px"></div>
+    </div>
+  </div>
+
 
   <div class="card hero" style="animation-delay:.02s">
     <div class="label">Total Club Value</div>
@@ -207,7 +223,7 @@ footer img{width:30px;opacity:.6;margin-bottom:8px}
   </div>
 
   <div class="card" style="animation-delay:.08s">
-    <div onclick="toggleSlateCard()" style="display:flex;align-items:center;gap:10px;cursor:pointer">
+    <div onclick="togglePanel('slate','slateBody','slateCardChev',true)" style="display:flex;align-items:center;gap:10px;cursor:pointer">
       <div style="flex:1">
         <div class="label" style="color:var(--gold)">&#128203; Stock Slate &middot; Up For Vote</div>
         <div class="note" id="slateHeadline" style="margin-top:4px"></div>
@@ -224,18 +240,6 @@ footer img{width:30px;opacity:.6;margin-bottom:8px}
         <div id="voteResults" style="margin-top:12px"></div>
       </div>
     </div>
-  </div>
-
-  <div class="card" style="animation-delay:.09s">
-    <div style="display:flex;align-items:center;gap:10px">
-      <div style="flex:1">
-        <div class="label" style="color:var(--gold)">&#128200; The Rail &middot; Member Watchlist</div>
-        <div class="note" style="margin-top:4px">Paper picks only &mdash; not club money. Tracked from the day you call it.</div>
-      </div>
-    </div>
-    <div id="watchAdd" style="margin-top:12px"></div>
-    <div id="watchList" style="margin-top:10px"></div>
-    <div class="note" id="watchFoot" style="margin-top:10px"></div>
   </div>
 
   <div class="card" style="animation-delay:.10s">
@@ -270,13 +274,18 @@ footer img{width:30px;opacity:.6;margin-bottom:8px}
   </div>
 
   <div class="card" style="animation-delay:.22s">
-    <div class="label" style="margin-bottom:2px">Holdings &middot; <span id="holdCount"></span> positions</div>
-    <div class="tabs">
-      <div class="tab on" data-sort="mktVal">By Value</div>
-      <div class="tab" data-sort="glPct">By Gain %</div>
-      <div class="tab" data-sort="dayPct">Today</div>
+    <div onclick="togglePanel('hold','holdBody','holdChev',false)" style="display:flex;align-items:center;gap:10px;cursor:pointer">
+      <div class="label" style="flex:1">Holdings &middot; <span id="holdCount"></span> positions</div>
+      <div id="holdChev" style="color:var(--muted);font-size:13px">&#9660;</div>
     </div>
-    <div id="holdings"></div>
+    <div id="holdBody" style="display:none">
+      <div class="tabs" style="margin-top:10px">
+        <div class="tab on" data-sort="mktVal">By Value</div>
+        <div class="tab" data-sort="glPct">By Gain %</div>
+        <div class="tab" data-sort="dayPct">Today</div>
+      </div>
+      <div id="holdings"></div>
+    </div>
   </div>
 
   <div class="card" style="animation-delay:.28s">
@@ -465,7 +474,7 @@ function renderSlate(){
       (ids.length?' &middot; <b style="color:'+(passing?'var(--green)':'var(--muted)')+'">'+passing+' passing</b>':'')+
       ((MEMBER&&ids.length)?' &middot; you&rsquo;ve voted on <b style="color:var(--gold)">'+done+' of '+ids.length+'</b>':'');
   }
-  applySlateCard(slateCardOpen());
+  applyPanel('slate','slateBody','slateCardChev',panelOpen('slate',true));
   fund.innerHTML='<div style="display:flex;gap:10px;flex-wrap:wrap">'+
     '<div style="flex:1;min-width:140px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px"><div class="note">Slate total</div><div class="mono" style="font-size:18px">'+fmt2(total)+'</div><div class="note">'+shares+' shares &middot; '+PROPOSALS.length+' names</div></div>'+
     (cash!==null?'<div style="flex:1;min-width:140px;background:var(--panel);border:1px solid '+(short>0?'rgba(233,138,120,.45)':'var(--line)')+';border-radius:10px;padding:10px"><div class="note">Cash on hand</div><div class="mono" style="font-size:18px">'+fmt2(cash)+'</div><div class="note">'+(short>0?'<span style="color:var(--red)">short '+fmt2(short)+'</span>':'covers the full slate')+'</div></div>':'')+
@@ -522,15 +531,16 @@ function passBar(pid){
 function toggleSlate(i){const m=document.getElementById('slateMore'+i),c=document.getElementById('slateChev'+i);
   const on=m.style.display==='none';m.style.display=on?'block':'none';if(c)c.innerHTML=on?'&#9650;':'&#9660;';}
 // Whole-card collapse. The choice sticks, so anyone who folds it away keeps it folded.
-function slateCardOpen(){try{return localStorage.getItem('cly_slate_open')!=='0';}catch(e){return true;}}
-function applySlateCard(open){
-  const b=document.getElementById('slateBody'),c=document.getElementById('slateCardChev');
+/* Collapsible cards. Each remembers its own open/closed state per person. */
+function panelOpen(k,dflt){try{const v=localStorage.getItem('cly_open_'+k);return v===null?dflt:v==='1';}catch(e){return dflt;}}
+function applyPanel(k,bodyId,chevId,open){
+  const b=document.getElementById(bodyId),c=document.getElementById(chevId);
   if(!b)return; b.style.display=open?'block':'none'; if(c)c.innerHTML=open?'&#9650;':'&#9660;';
 }
-function toggleSlateCard(){
-  const open=!slateCardOpen();
-  try{localStorage.setItem('cly_slate_open',open?'1':'0');}catch(e){}
-  applySlateCard(open);
+function togglePanel(k,bodyId,chevId,dflt){
+  const open=!panelOpen(k,dflt);
+  try{localStorage.setItem('cly_open_'+k,open?'1':'0');}catch(e){}
+  applyPanel(k,bodyId,chevId,open);
 }
 
 function render(){
@@ -547,7 +557,9 @@ function render(){
   document.getElementById('inlineGain').textContent=pct1(DATA.totalGainPct);
   document.getElementById('mathNote').innerHTML='Why these don\u2019t add to the total: \u201CInvested\u201D and \u201Cgain\u201D describe your <b>securities only</b>. Your '+fmt(DATA.costBasis)+' cost basis grew into about '+fmt(DATA.marketValue)+' of stocks &amp; funds (the +'+fmt(DATA.totalGain)+' gain). Add '+fmt(DATA.cash)+' cash and you reach the '+fmt(DATA.totalValue)+' total.';
   document.getElementById('holdCount').textContent=DATA.holdings.length;
-  drawDonut();drawLeaders();renderHoldings('mktVal');renderEducation();renderEvents();setTimeout(ponyConfetti,1500);clubInit();
+  drawDonut();drawLeaders();renderHoldings('mktVal');renderEducation();renderEvents();
+  applyPanel('hold','holdBody','holdChev',panelOpen('hold',false));
+  setTimeout(ponyConfetti,1500);clubInit();
 }
 
 function drawDonut(){
@@ -631,10 +643,9 @@ function flash(m){let t=document.getElementById('clyToast');if(!t){t=document.cr
 let MEMBER=null; try{MEMBER=JSON.parse(localStorage.getItem('cly_member')||'null');}catch(e){}
 function clubInit(){renderMemberUI();loadVote();loadPoll();loadWatch();}
 
-/* ===== The Rail: member watchlist =====
+/* ===== The Barn: member watchlist =====
    Picks live in Supabase; prices come from watchlist.json, written by its own
    workflow job. Either source can be missing without breaking the other. */
-const WATCH_MAX=3;
 let WATCH=[],WATCH_PRICES={},WATCH_UPDATED=null;
 async function loadWatch(){
   try{ WATCH=await sbGet('watchlist_public?select=id,ticker,note,added_at,name&order=added_at.asc'); }
@@ -645,21 +656,33 @@ async function loadWatch(){
   }catch(e){ WATCH_PRICES={}; }   // not priced yet — show the picks anyway
   renderWatch();
 }
+// Collapsed, the card still has to say whether anything is happening in there.
+function watchHeadlineText(){
+  const h=document.getElementById('watchHeadline'); if(!h) return;
+  if(BACKEND_DOWN){ h.textContent='Currently offline.'; return; }
+  if(!WATCH.length){ h.innerHTML='Call a stock and we track it from that day. Paper only &mdash; <b style="color:var(--txt)">no picks yet</b>.'; return; }
+  const scored=WATCH.map(w=>WATCH_PRICES[w.id]).filter(p=>p&&p.pct!=null).sort((a,b)=>b.pct-a.pct);
+  const n=WATCH.length+' pick'+(WATCH.length===1?'':'s');
+  if(!scored.length){ h.innerHTML=n+' &middot; prices land on the next update'; return; }
+  const top=scored[0];
+  h.innerHTML=n+' &middot; leader <b style="color:var(--gold)">'+esc(top.ticker)+'</b> '+
+    '<b style="color:'+(top.pct>=0?'var(--green)':'var(--red)')+'">'+(top.pct>=0?'+':'')+top.pct.toFixed(1)+'%</b> ('+esc((top.name||'').split(' ')[0])+')';
+}
 function watchAddHTML(){
   if(BACKEND_DOWN) return '';
   if(!MEMBER) return '<div class="note">Sign in above to add a pick.</div>';
-  const mine=WATCH.filter(w=>w.name===MEMBER.name).length;
-  if(mine>=WATCH_MAX) return '<div class="note">You&rsquo;ve used all '+WATCH_MAX+' of your picks.</div>';
   return '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">'+
     '<input class="m-in" id="wTicker" type="text" placeholder="ticker" maxlength="8" style="width:96px;text-transform:uppercase">'+
-    '<input class="m-in" id="wNote" type="text" placeholder="why? (optional, locked in)" style="flex:1;min-width:150px">'+
+    '<input class="m-in" id="wNote" type="text" placeholder="why? (optional)" style="flex:1;min-width:150px">'+
     '<button class="vote-btn" onclick="addWatch()">Add pick</button>'+
     '<span id="wStatus" class="note"></span></div>'+
-    '<div class="note" style="margin-top:5px">'+(WATCH_MAX-mine)+' pick'+((WATCH_MAX-mine)===1?'':'s')+' left. You can undo within an hour &mdash; after that it&rsquo;s on the record.</div>';
+    '<div class="note" style="margin-top:5px">Add as many as you like. You can remove your own picks any time.</div>';
 }
 function renderWatch(){
   const add=document.getElementById('watchAdd'),list=document.getElementById('watchList'),foot=document.getElementById('watchFoot');
   if(!list) return;
+  applyPanel('watch','watchBody','watchChev',panelOpen('watch',false));
+  watchHeadlineText();
   if(BACKEND_DOWN){ add.innerHTML=''; list.innerHTML=offlineNotice('The watchlist'); if(foot)foot.innerHTML=''; return; }
   add.innerHTML=watchAddHTML();
   if(!WATCH.length){ list.innerHTML='<div class="note" style="margin-top:6px">No picks yet &mdash; first one on the board sets the bar.</div>'; if(foot)foot.innerHTML=''; return; }
@@ -674,12 +697,11 @@ function renderWatch(){
     const since=p&&p.entryAt?new Date(p.entryAt):new Date(r.w.added_at);
     const rank=pct===null?'':'<span class="mono" style="color:var(--muted);font-size:11px;width:16px;display:inline-block">'+(i+1)+'</span>';
     const mine=MEMBER&&r.w.name===MEMBER.name;
-    const canUndo=mine&&((Date.now()-new Date(r.w.added_at).getTime())<3600000);
     return '<div style="display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-top:1px solid var(--line)">'+
       '<div style="flex:1">'+rank+
         '<a href="'+yUrl(r.w.ticker)+'" target="_blank" rel="noopener" class="mono" style="font-size:15px;color:var(--gold);font-weight:700;text-decoration:none;border-bottom:1px dotted rgba(212,175,55,.55)">'+esc(r.w.ticker)+'</a>'+
         '<div class="note" style="margin-top:2px">'+esc(r.w.name)+' &middot; since '+since.toLocaleDateString('en-US',{month:'short',day:'numeric'})+
-          (canUndo?' &middot; <a href="#" onclick="removeWatch('+r.w.id+');return false" style="color:var(--red)">undo</a>':'')+'</div>'+
+          (mine?' &middot; <a href="#" onclick="removeWatch('+r.w.id+');return false" style="color:var(--red)">undo</a>':'')+'</div>'+
         (r.w.note?'<div style="font-size:12px;color:var(--muted);border-left:2px solid var(--line);padding-left:8px;margin-top:5px">'+esc(r.w.note)+'</div>':'')+
       '</div>'+
       '<div style="text-align:right"><div class="mono" style="font-size:15px;font-weight:700;color:'+col+'">'+val+'</div>'+
@@ -716,8 +738,8 @@ function authHTML(){
   return '<div style="background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 14px"><div class="note" style="margin-bottom:6px">Sign in to vote &amp; RSVP &mdash; just your last name</div><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><input class="m-in" id="mCode" type="text" placeholder="last name" autocomplete="off" style="flex:1;min-width:140px"><button class="vote-btn" onclick="memberLogin()">Sign in</button><span id="mLoginStatus" class="note"></span></div></div>';
 }
 function renderMemberUI(){const el=document.getElementById('memberBar');if(el)el.innerHTML=authHTML();}
-async function memberLogin(){const code=(document.getElementById('mCode').value||'').trim();const st=document.getElementById('mLoginStatus');if(!code){if(st)st.textContent='Enter your last name.';return;}if(st)st.textContent='Checking…';try{const rows=await sbRpc('member_login',{p_code:code});if(!rows.length){if(st)st.textContent='No match — check spelling.';return;}MEMBER={id:rows[0].id,name:rows[0].name};localStorage.setItem('cly_member',JSON.stringify(MEMBER));renderMemberUI();loadVote();loadPoll();flash('Welcome, '+MEMBER.name.split(' ')[0]+'!');}catch(e){if(st)st.textContent=e.offline?'Sign-in is offline — the club database is unreachable.':('Error: '+e.message);}}
-function memberLogout(){MEMBER=null;MY_VOTES={};localStorage.removeItem('cly_member');renderMemberUI();loadVote();loadPoll();}
+async function memberLogin(){const code=(document.getElementById('mCode').value||'').trim();const st=document.getElementById('mLoginStatus');if(!code){if(st)st.textContent='Enter your last name.';return;}if(st)st.textContent='Checking…';try{const rows=await sbRpc('member_login',{p_code:code});if(!rows.length){if(st)st.textContent='No match — check spelling.';return;}MEMBER={id:rows[0].id,name:rows[0].name};localStorage.setItem('cly_member',JSON.stringify(MEMBER));renderMemberUI();loadVote();loadPoll();loadWatch();flash('Welcome, '+MEMBER.name.split(' ')[0]+'!');}catch(e){if(st)st.textContent=e.offline?'Sign-in is offline — the club database is unreachable.':('Error: '+e.message);}}
+function memberLogout(){MEMBER=null;MY_VOTES={};localStorage.removeItem('cly_member');renderMemberUI();loadVote();loadPoll();loadWatch();}
 
 let PROPOSAL_IDS={},TALLIES={},MY_VOTES={},REASONS={},REASON_OPEN={},MEMBER_COUNT=0;
 async function loadVote(){
