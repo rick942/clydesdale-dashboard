@@ -706,7 +706,7 @@ function renderWatch(){
         (r.w.note?'<div style="font-size:12px;color:var(--muted);border-left:2px solid var(--line);padding-left:8px;margin-top:5px">'+esc(r.w.note)+'</div>':'')+
       '</div>'+
       '<div style="text-align:right"><div class="mono" style="font-size:15px;font-weight:700;color:'+col+'">'+val+'</div>'+
-        (p&&p.lastPrice!=null?'<div class="note">'+fmt2(p.lastPrice)+'</div>':'<div class="note">pricing\u2026</div>')+'</div></div>';
+        (p&&p.lastPrice!=null?'<div class="note">'+fmt2(p.lastPrice)+'</div>':'<div class="note">pricing\u2026</div><div class="note" style="font-size:10px">quotes update<br>every 15 min</div>')+'</div></div>';
   }).join('');
   if(foot) foot.innerHTML=WATCH_UPDATED
     ? 'Prices updated '+new Date(WATCH_UPDATED).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+' &middot; refreshed every 15 min. Paper only — nothing here is club money.'
@@ -727,6 +727,10 @@ async function addWatch(){
 }
 async function removeWatch(id){
   if(needLogin())return;
+  const w=WATCH.find(x=>x.id===id);
+  const p=WATCH_PRICES[id];
+  const std=(p&&p.pct!=null)?' It\u2019s at '+(p.pct>=0?'+':'')+p.pct.toFixed(1)+'% right now.':'';
+  if(!confirm('Remove '+(w?w.ticker:'this pick')+' from The Barn?'+std+' Its record goes with it.'))return;
   try{
     const msg=await sbRpc('remove_watch',{p_member_id:MEMBER.id,p_id:id});
     flash(msg==='ok'?'Pick removed':msg); loadWatch();
