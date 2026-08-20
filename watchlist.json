@@ -1,5 +1,5 @@
 {
- "updated": "2026-08-20T12:54:39Z",
+ "updated": "2026-08-20T13:48:51Z",
  "items": [
   {
    "id": 13,
@@ -9,19 +9,8 @@
    "addedAt": "2026-08-15T02:56:48.315933+00:00",
    "entryPrice": 225.16,
    "entryAt": "2026-08-15T02:57:09Z",
-   "lastPrice": 217.56,
-   "pct": -3.38
-  },
-  {
-   "id": 14,
-   "ticker": "RRX",
-   "name": "Ricky Johnson",
-   "note": "Only US supplier putting actuators in humanoid joints",
-   "addedAt": "2026-08-15T03:49:30.400402+00:00",
-   "entryPrice": 175.49,
-   "entryAt": "2026-08-15T04:14:34Z",
-   "lastPrice": 169.49,
-   "pct": -3.42
+   "lastPrice": 217.96,
+   "pct": -3.2
   },
   {
    "id": 15,
@@ -31,8 +20,19 @@
    "addedAt": "2026-08-15T11:23:26.563703+00:00",
    "entryPrice": 971.66,
    "entryAt": "2026-08-15T11:29:14Z",
-   "lastPrice": 937.105,
-   "pct": -3.56
+   "lastPrice": 937.41,
+   "pct": -3.52
+  },
+  {
+   "id": 14,
+   "ticker": "RRX",
+   "name": "Ricky Johnson",
+   "note": "Only US supplier putting actuators in humanoid joints",
+   "addedAt": "2026-08-15T03:49:30.400402+00:00",
+   "entryPrice": 175.49,
+   "entryAt": "2026-08-15T04:14:34Z",
+   "lastPrice": 167.26,
+   "pct": -4.69
   }
  ]
 }
