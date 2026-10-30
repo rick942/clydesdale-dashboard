@@ -1,17 +1,6 @@
 {
- "updated": "2026-10-30T13:22:28Z",
+ "updated": "2026-10-30T18:45:48Z",
  "items": [
-  {
-   "id": 15,
-   "ticker": "MU",
-   "name": "Mark Steiniger",
-   "note": "Memory demand",
-   "addedAt": "2026-08-15T11:23:26.563703+00:00",
-   "entryPrice": 971.66,
-   "entryAt": "2026-08-15T11:29:14Z",
-   "lastPrice": 934.27,
-   "pct": -3.85
-  },
   {
    "id": 13,
    "ticker": "NVDA",
@@ -20,8 +9,19 @@
    "addedAt": "2026-08-15T02:56:48.315933+00:00",
    "entryPrice": 225.16,
    "entryAt": "2026-08-15T02:57:09Z",
-   "lastPrice": 213.66,
-   "pct": -5.11
+   "lastPrice": 200.96,
+   "pct": -10.75
+  },
+  {
+   "id": 15,
+   "ticker": "MU",
+   "name": "Mark Steiniger",
+   "note": "Memory demand",
+   "addedAt": "2026-08-15T11:23:26.563703+00:00",
+   "entryPrice": 971.66,
+   "entryAt": "2026-08-15T11:29:14Z",
+   "lastPrice": 865.7,
+   "pct": -10.91
   },
   {
    "id": 14,
@@ -31,8 +31,8 @@
    "addedAt": "2026-08-15T03:49:30.400402+00:00",
    "entryPrice": 175.49,
    "entryAt": "2026-08-15T04:14:34Z",
-   "lastPrice": 163.62,
-   "pct": -6.76
+   "lastPrice": 154.135,
+   "pct": -12.17
   }
  ]
 }
