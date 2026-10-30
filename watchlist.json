@@ -1,17 +1,6 @@
 {
- "updated": "2026-10-30T18:45:48Z",
+ "updated": "2026-10-30T22:49:49Z",
  "items": [
-  {
-   "id": 13,
-   "ticker": "NVDA",
-   "name": "Ricky Johnson",
-   "note": "first one on the board - watching whether data center demand holds up",
-   "addedAt": "2026-08-15T02:56:48.315933+00:00",
-   "entryPrice": 225.16,
-   "entryAt": "2026-08-15T02:57:09Z",
-   "lastPrice": 200.96,
-   "pct": -10.75
-  },
   {
    "id": 15,
    "ticker": "MU",
@@ -20,8 +9,19 @@
    "addedAt": "2026-08-15T11:23:26.563703+00:00",
    "entryPrice": 971.66,
    "entryAt": "2026-08-15T11:29:14Z",
-   "lastPrice": 865.7,
-   "pct": -10.91
+   "lastPrice": 884.74,
+   "pct": -8.95
+  },
+  {
+   "id": 13,
+   "ticker": "NVDA",
+   "name": "Ricky Johnson",
+   "note": "first one on the board - watching whether data center demand holds up",
+   "addedAt": "2026-08-15T02:56:48.315933+00:00",
+   "entryPrice": 225.16,
+   "entryAt": "2026-08-15T02:57:09Z",
+   "lastPrice": 204.64,
+   "pct": -9.11
   },
   {
    "id": 14,
@@ -31,8 +31,8 @@
    "addedAt": "2026-08-15T03:49:30.400402+00:00",
    "entryPrice": 175.49,
    "entryAt": "2026-08-15T04:14:34Z",
-   "lastPrice": 154.135,
-   "pct": -12.17
+   "lastPrice": 157.24,
+   "pct": -10.4
   }
  ]
 }
