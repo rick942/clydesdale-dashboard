@@ -1,16 +1,16 @@
 {
- "updated": "2026-11-02T09:49:11Z",
+ "updated": "2026-11-02T20:01:47Z",
  "items": [
   {
-   "id": 15,
-   "ticker": "MU",
-   "name": "Mark Steiniger",
-   "note": "Memory demand",
-   "addedAt": "2026-08-15T11:23:26.563703+00:00",
-   "entryPrice": 971.66,
-   "entryAt": "2026-08-15T11:29:14Z",
-   "lastPrice": 884.74,
-   "pct": -8.95
+   "id": 14,
+   "ticker": "RRX",
+   "name": "Ricky Johnson",
+   "note": "Only US supplier putting actuators in humanoid joints",
+   "addedAt": "2026-08-15T03:49:30.400402+00:00",
+   "entryPrice": 175.49,
+   "entryAt": "2026-08-15T04:14:34Z",
+   "lastPrice": 161.015,
+   "pct": -8.25
   },
   {
    "id": 13,
@@ -20,19 +20,19 @@
    "addedAt": "2026-08-15T02:56:48.315933+00:00",
    "entryPrice": 225.16,
    "entryAt": "2026-08-15T02:57:09Z",
-   "lastPrice": 204.64,
-   "pct": -9.11
+   "lastPrice": 204.14,
+   "pct": -9.34
   },
   {
-   "id": 14,
-   "ticker": "RRX",
-   "name": "Ricky Johnson",
-   "note": "Only US supplier putting actuators in humanoid joints",
-   "addedAt": "2026-08-15T03:49:30.400402+00:00",
-   "entryPrice": 175.49,
-   "entryAt": "2026-08-15T04:14:34Z",
-   "lastPrice": 157.24,
-   "pct": -10.4
+   "id": 15,
+   "ticker": "MU",
+   "name": "Mark Steiniger",
+   "note": "Memory demand",
+   "addedAt": "2026-08-15T11:23:26.563703+00:00",
+   "entryPrice": 971.66,
+   "entryAt": "2026-08-15T11:29:14Z",
+   "lastPrice": 837.11,
+   "pct": -13.85
   }
  ]
 }
