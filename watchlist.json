@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-23T04:01:11Z",
+ "updated": "2026-11-23T14:40:51Z",
  "items": [
   {
    "id": 14,
@@ -9,19 +9,8 @@
    "addedAt": "2026-08-15T03:49:30.400402+00:00",
    "entryPrice": 175.49,
    "entryAt": "2026-08-15T04:14:34Z",
-   "lastPrice": 152.35,
-   "pct": -13.19
-  },
-  {
-   "id": 15,
-   "ticker": "MU",
-   "name": "Mark Steiniger",
-   "note": "Memory demand",
-   "addedAt": "2026-08-15T11:23:26.563703+00:00",
-   "entryPrice": 971.66,
-   "entryAt": "2026-08-15T11:29:14Z",
-   "lastPrice": 594.51,
-   "pct": -38.82
+   "lastPrice": 162.66,
+   "pct": -7.31
   },
   {
    "id": 13,
@@ -31,8 +20,19 @@
    "addedAt": "2026-08-15T02:56:48.315933+00:00",
    "entryPrice": 225.16,
    "entryAt": "2026-08-15T02:57:09Z",
-   "lastPrice": 125.53,
-   "pct": -44.25
+   "lastPrice": 158.3,
+   "pct": -29.69
+  },
+  {
+   "id": 15,
+   "ticker": "MU",
+   "name": "Mark Steiniger",
+   "note": "Memory demand",
+   "addedAt": "2026-08-15T11:23:26.563703+00:00",
+   "entryPrice": 971.66,
+   "entryAt": "2026-08-15T11:29:14Z",
+   "lastPrice": 676.6,
+   "pct": -30.37
   }
  ]
 }
